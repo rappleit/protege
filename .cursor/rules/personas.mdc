@@ -1,0 +1,59 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Protege AI Agent Personas Documentation
+
+## What are the AI Agent Personas?
+
+Protege's AI agents are decentralized, interactive student characters hosted on the DAIN network.  
+Each agent embodies a unique persona — such as a curious child, a Viking warrior, or a scholar — designed to simulate authentic, emotionally engaging teaching experiences.
+
+Agents:
+- Listen to the user's explanations.
+- React emotionally (excitement, confusion, boredom).
+- Ask follow-up questions.
+- Evaluate teaching quality across multiple dimensions.
+- Award badges to encourage effective teaching styles.
+
+---
+
+## Input to the AI Agent
+
+For every teaching moment, the agent receives:
+
+| Field | Description |
+|:------|:------------|
+| `sessionId` | Unique ID for the ongoing lesson (topic + persona). |
+| `explanation` | User's text-based explanation. |
+| `imageBase64` | (Optional) Whiteboard drawing provided as a base64-encoded string. |
+| `inputType` | Mode of input: `"text"`, `"speech"`, `"text+drawing"`, `"speech+drawing"`, etc. |
+| `timestamp` | UTC timestamp of when the teaching moment was submitted. |
+
+---
+
+## Output from the AI Agent
+
+The agent processes the input and responds with:
+
+| Field | Description |
+|:------|:------------|
+| `reaction` | Textual emotional response to the user's teaching. |
+| `currentEmotionState` | Current emotional state (e.g., `"excited"`, `"confused"`, `"bored"`). |
+| `followUpQuestion` | Intelligent question to deepen the conversation. |
+| `score` | Evaluation breakdown across clarity, engagement, accuracy, structure, and an overall score. |
+| `badgesUnlocked` | List of badges earned during the session. |
+
+---
+
+### Example Score Breakdown
+
+```json
+{
+  "clarity": 85,
+  "engagement": 78,
+  "accuracy": 92,
+  "structure": 88,
+  "overall": 86
+}

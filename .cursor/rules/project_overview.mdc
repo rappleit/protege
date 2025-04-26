@@ -1,0 +1,38 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Protege: Teach to Learn
+
+## Tagline
+> **Learn better by teaching lovable AI students in a decentralized 3D classroom.**
+
+## Problem Statement
+Traditional learning often focuses on *passively consuming* information. Educational research shows that people retain knowledge *much more effectively* when they **teach others** — a phenomenon known as the **Protégé Effect**.
+
+Today, most learners don't have easy access to someone they can teach. Protege solves this.
+
+## Solution
+**Protege** creates a **playful, immersive environment** where users teach **AI-powered student characters** — each with unique personalities, attention spans, and emotional reactions. By explaining concepts to these characters, users *solidify their own understanding* while being actively challenged and emotionally engaged.
+
+### Key Features
+- **Dynamic AI Students**: Teach a 5-year-old, a Viking warrior, or a scholar — each requiring tailored communication.
+- **Real-time Feedback**: Students react emotionally (confusion, excitement, boredom) based on teaching quality.
+- **3D Immersive Presence**: Users interact with animated avatars in a virtual classroom.
+- **Teaching Evaluation**: Users receive detailed feedback on clarity, structure, and engagement.
+
+## How It Works
+1. **Pick a Student**: Choose from a roster of AI student personas.
+2. **Teach the Lesson**: Explain the topic using text, whiteboard visuals, or voice.
+3. **Engage with the Student**: Students respond dynamically with questions and emotions.
+4. **Get Evaluated**: Receive a teaching performance score across clarity, engagement, and accuracy metrics.
+
+## Project Structure
+
+This project is structured into distinct frontend and backend components.
+
+- **README:** For a general introduction and setup instructions, see [README.md](mdc:README.md).
+- **Frontend:** The user interface code resides in the [frontend/](mdc:frontend) directory.
+- **Backend:** The server-side logic and API are located in the [backend/](mdc:backend) directory.
+- **Personas:** The [personas/](mdc:personas) directory contains specific configurations for AI agents
