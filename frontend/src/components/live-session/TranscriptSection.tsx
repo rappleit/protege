@@ -16,11 +16,11 @@ const TranscriptSection: React.FC<TranscriptSectionProps> = ({ messages }) => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
-      className="w-full bg-card rounded-xl shadow-md p-4 flex flex-col h-3/4 bg-gray-800"
+      className="w-full bg-card rounded-xl shadow-md p-4 flex flex-col h-3/4 bg-scholarly-navy"
     >
       <h3 className="text-lg font-medium mb-3 text-scholarly-gold">Transcript</h3>
       
-      <div className="flex-1 overflow-y-auto bg-muted/30 rounded-lg p-4 ">
+      <div className="flex-1 overflow-y-auto bg-scholarly-charcoal/50 border-scholarly-gold/40 rounded-lg p-4 ">
         {messages.length === 0 ? (
           <div className="text-center text-gray-400 h-full flex items-center justify-center">
             <p>No messages yet</p>
@@ -32,8 +32,8 @@ const TranscriptSection: React.FC<TranscriptSectionProps> = ({ messages }) => {
                 key={index}
                 className={`p-3 rounded-lg ${
                   message.sender === 'user' 
-                    ? "bg-primary text-primary-foreground ml-auto" 
-                    : "bg-muted"
+                    ? "bg-scholarly-parchment text-primary-foreground ml-auto" 
+                    : "bg-scholarly-parchment"
                 } max-w-[90%] ${message.sender === 'user' ? "ml-auto" : "mr-auto"}`}
               >
                 <p className="text-xs text-gray-400 mb-1">{message.sender === 'user' ? 'You' : 'Persona'}</p>

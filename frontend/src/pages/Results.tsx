@@ -27,7 +27,7 @@ const Results = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-scholarly-slate">
       <Header showTopic />
       
       <main className="flex-1 flex flex-col items-center p-6">
