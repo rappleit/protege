@@ -1,18 +1,35 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Button from './Button';
 import { cn } from '@/lib/utils';
-import { Mic, MicOff, CircleStop } from 'lucide-react';
+import { Mic, MicOff, CircleStop, Volume2, VolumeX, Send, Upload } from 'lucide-react';
 import { useSession } from '@/context/SessionContext';
+import { toast } from 'sonner';
 
 type RecordingControlsProps = {
   onSessionEnd: () => void;
   className?: string;
+  onSendData?: (audioBlob?: Blob) => void;
 };
 
-const RecordingControls: React.FC<RecordingControlsProps> = ({ onSessionEnd, className }) => {
+const RecordingControls: React.FC<RecordingControlsProps> = ({ 
+  onSessionEnd, 
+  className,
+  onSendData 
+}) => {
   const { isRecording, setIsRecording, recordingTime, setRecordingTime } = useSession();
   const [isPaused, setIsPaused] = useState(false);
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+
+  // Refs
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -28,34 +45,188 @@ const RecordingControls: React.FC<RecordingControlsProps> = ({ onSessionEnd, cla
     };
   }, [isRecording, isPaused, recordingTime, setRecordingTime]);
   
+  useEffect(() => {
+    let animationFrameId: number;
+    
+    const updateAudioLevel = () => {
+      if (analyserRef.current && dataArrayRef.current) {
+        analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+        const values = dataArrayRef.current;
+        let sum = 0;
+        for (let i = 0; i < values.length; i++) {
+          sum += values[i];
+        }
+        const average = sum / values.length;
+        setAudioLevel(average / 256); // Normalized to 0-1
+      }
+      animationFrameId = requestAnimationFrame(updateAudioLevel);
+    };
+    
+    if (audioStream) {
+      updateAudioLevel();
+    }
+    
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [audioStream]);
+  
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
-  const toggleRecording = () => {
+  const setupAudio = async () => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setAudioStream(stream);
+      setAudioError(null);
+      
+      // Setup analyzer for visualizing audio levels
+      const audioContext = audioContextRef.current;
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaStreamSource(stream);
+      
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+      
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      
+      analyserRef.current = analyser;
+      dataArrayRef.current = dataArray;
+      
+      // Setup MediaRecorder for recording audio
+      audioChunksRef.current = [];
+      const mediaRecorder = new MediaRecorder(stream);
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(audioBlob);
+      };
+      
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start(1000); // Collect data every second
+      
+      return stream;
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      setAudioError('Microphone access denied. Please check your browser permissions.');
+      return null;
+    }
+  };
+  
+  const stopAudio = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    
+    if (audioStream) {
+      audioStream.getTracks().forEach(track => track.stop());
+      setAudioStream(null);
+    }
+    
+    if (analyserRef.current) {
+      analyserRef.current.disconnect();
+      analyserRef.current = null;
+    }
+    
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close().catch(console.error);
+    }
+  };
+  
+  const toggleRecording = async () => {
     if (!isRecording) {
-      setIsRecording(true);
-      setIsPaused(false);
+      const stream = await setupAudio();
+      if (stream) {
+        setIsRecording(true);
+        setIsPaused(false);
+      }
     } else {
-      setIsPaused(!isPaused);
+      if (isPaused) {
+        // Resume recording
+        const stream = await setupAudio();
+        if (stream) {
+          setIsPaused(false);
+        }
+      } else {
+        // Pause recording
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+          mediaRecorderRef.current.stop();
+        }
+        stopAudio();
+        setIsPaused(true);
+      }
     }
   };
   
   const stopRecording = () => {
     if (window.confirm('Are you sure you want to end your session?')) {
+      stopAudio();
       setIsRecording(false);
+      setIsPaused(false);
       onSessionEnd();
     }
+  };
+
+  const handleSendData = async () => {
+    try {
+      setIsSending(true);
+      
+      // If we're currently recording, finalize the recording first
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        // Wait a short time for the onstop event to fire and create the blob
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      // Call the parent handler if provided, passing the audio blob
+      if (onSendData) {
+        onSendData(audioBlob || undefined);
+      }
+      
+      toast.success('All inputs sent to the backend successfully!');
+    } catch (error) {
+      console.error('Error sending data:', error);
+      toast.error('Failed to send inputs to the backend.');
+    } finally {
+      setIsSending(false);
+    }
+  };
+  
+  // Function to play back the recorded audio (for testing)
+  const playRecordedAudio = () => {
+    if (!audioBlob) {
+      toast.error('No audio has been recorded yet');
+      return;
+    }
+    
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+    audio.play();
   };
   
   return (
     <div className={cn('flex flex-col items-center p-4 rounded-lg bg-scholarly-navy/80 backdrop-blur border border-scholarly-gold/20 shadow-lg shadow-scholarly-gold/10', className)}>
       <div className="flex items-center gap-4 mb-4">
-        <div className="w-24 text-center">
+        <div className="w-20 text-center">
           <p className="text-xl font-medium text-scholarly-parchment">{formatTime(recordingTime)}</p>
-          <p className="text-xs text-scholarly-gold/80">Recording Time</p>
+          <p className="text-xs text-scholarly-gold/80">Recording</p>
         </div>
         
         <div className="flex gap-2">
@@ -72,6 +243,16 @@ const RecordingControls: React.FC<RecordingControlsProps> = ({ onSessionEnd, cla
           </Button>
           
           <Button 
+            onClick={handleSendData}
+            size="sm"
+            variant="outline"
+            className="rounded-full w-12 h-12 flex items-center justify-center p-0 border-2 border-scholarly-gold/30 bg-scholarly-navy/70 hover:bg-scholarly-navy/90"
+            disabled={isSending}
+          >
+            <Upload size={20} className="text-scholarly-gold" />
+          </Button>
+          
+          <Button 
             onClick={stopRecording}
             size="sm"
             variant="outline"
@@ -82,29 +263,74 @@ const RecordingControls: React.FC<RecordingControlsProps> = ({ onSessionEnd, cla
           </Button>
         </div>
         
-        <div className="w-24 flex justify-center">
-          {isRecording && !isPaused && (
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse"></div>
-              <p className="text-xs font-medium text-red-500">LIVE</p>
+        <div className="w-24 flex items-center justify-center">
+          {isRecording && !isPaused ? (
+            <div className="flex flex-col items-center">
+              <div className="flex gap-1 mb-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div 
+                    key={i}
+                    className="w-1 bg-scholarly-gold rounded-full"
+                    style={{
+                      height: `${Math.min(4 + (i + 1) * 3, 4 + (i + 1) * 3 * audioLevel * 5)}px`,
+                      opacity: audioLevel > i * 0.2 ? 1 : 0.3
+                    }}
+                  ></div>
+                ))}
+              </div>
+              <div className="flex items-center gap-1">
+                <Volume2 size={14} className="text-scholarly-gold/80" />
+                <p className="text-xs font-medium text-scholarly-gold/80">LIVE</p>
+              </div>
             </div>
-          )}
-          {isRecording && isPaused && (
-            <p className="text-xs font-medium text-amber-500">PAUSED</p>
+          ) : isPaused ? (
+            <div className="flex items-center gap-1">
+              <VolumeX size={14} className="text-amber-500/80" />
+              <p className="text-xs font-medium text-amber-500">PAUSED</p>
+            </div>
+          ) : null}
+          
+          {audioError && (
+            <p className="text-xs text-red-500">{audioError}</p>
           )}
         </div>
       </div>
       
-      {recordingTime > 0 && (
-        <Button 
-          onClick={stopRecording}
-          variant="default"
-          size="sm"
-          className="bg-scholarly-burgundy/80 hover:bg-scholarly-burgundy text-scholarly-cream border-2 border-scholarly-gold/30"
-        >
-          End Session
-        </Button>
-      )}
+      <div className="flex gap-2">
+        {recordingTime > 0 && (
+          <Button 
+            onClick={stopRecording}
+            variant="default"
+            size="sm"
+            className="bg-scholarly-burgundy/80 hover:bg-scholarly-burgundy text-scholarly-cream border-2 border-scholarly-gold/30"
+          >
+            End Session
+          </Button>
+        )}
+        
+        {recordingTime > 0 && (
+          <Button
+            onClick={handleSendData}
+            variant="default"
+            size="sm"
+            className="bg-scholarly-navy hover:bg-scholarly-navy/90 text-scholarly-gold border-2 border-scholarly-gold/30"
+            disabled={isSending}
+          >
+            {isSending ? 'Sending...' : 'Send All Inputs'}
+          </Button>
+        )}
+        
+        {audioBlob && (
+          <Button
+            onClick={playRecordedAudio}
+            variant="outline"
+            size="sm"
+            className="border-scholarly-gold/30"
+          >
+            Test Audio
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
