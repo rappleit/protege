@@ -18,7 +18,7 @@ client = ElevenLabs(api_key=api_key)
 # Import personas from the local file
 # Assuming protege_personas.py is in the same directory
 try:
-    from protege_personas import PERSONAS
+    from backend.app.persona.protege_personas import PERSONAS
 except ImportError:
     raise ImportError("Could not import PERSONAS from protege_personas.py. Make sure the file exists and is in the correct path.")
 

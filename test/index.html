@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <button onclick="connect()">Connect</button>
+    <input id="message" placeholder="Type a message">
+    <button onclick="sendMessage()">Send</button>
+    <div id="output"></div>
+
+    <script>
+        let ws;
+        
+        async function connect() {
+            // Get token first
+            const response = await fetch('http://localhost:8000/api/v1/ws-token');
+            const data = await response.json();
+            const token = data.token;
+            
+            // Connect to WebSocket
+            ws = new WebSocket(`ws://localhost:8000/api/v1/ws/test-session-123?token=${token}`);
+            
+            ws.onopen = () => {
+                document.getElementById('output').innerHTML += '<p>Connected!</p>';
+            };
+            
+            ws.onmessage = (event) => {
+                document.getElementById('output').innerHTML += `<p>Received: ${event.data}</p>`;
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('output').innerHTML += '<p>Disconnected</p>';
+            };
+        }
+        
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            ws.send(JSON.stringify({
+                type: 'text',
+                content: message
+            }));
+        }
+    </script>
+</body>
+</html>
