@@ -1,4 +1,3 @@
-
 export const getInitialMessage = (persona: string): string => {
   switch (persona) {
     case 'child':
@@ -10,27 +9,4 @@ export const getInitialMessage = (persona: string): string => {
     default:
       return "Hello! I'm excited to hear your explanation. Please begin whenever you're ready.";
   }
-};
-
-export const getFollowUpQuestion = (persona: string, topic: string): string => {
-  const questions = {
-    child: [
-      `But why is ${topic} important? Can you explain it simpler?`,
-      `I don't understand. Can you compare ${topic} to something I know, like toys or ice cream?`,
-      `Hmm, that's interesting! But what happens if ${topic} stops working?`
-    ],
-    professor: [
-      `Interesting perspective. Could you elaborate on how recent research has impacted our understanding of ${topic}?`,
-      `What's your position on the controversies surrounding ${topic} in the academic literature?`,
-      `That's a fair overview, but how would you respond to critiques regarding the limitations of ${topic}?`
-    ],
-    historical: [
-      `In my time, we had no concept of ${topic}. How has this knowledge evolved over the centuries?`,
-      `How fascinating! How would you explain the connection between ${topic} and the basic scientific principles we established in my era?`,
-      `If we had understood ${topic} in my time, how might history have unfolded differently?`
-    ]
-  };
-  
-  const personaQuestions = questions[persona as keyof typeof questions] || questions.child;
-  return personaQuestions[Math.floor(Math.random() * personaQuestions.length)];
 };
