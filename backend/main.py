@@ -24,15 +24,28 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Load API key from environment
-os.environ['GOOGLE_API_KEY'] = ''
-gemini_api_key = os.environ['GOOGLE_API_KEY']
+GEMINI_API_KEY = os.environ.get('GOOGLE_API_KEY', '')
+if not GEMINI_API_KEY:
+    logger.warning("GOOGLE_API_KEY environment variable not set. Please set it using the start.sh script.")
+    # Optionally, you might want to exit or raise an error if the key is absolutely required
+    # exit(1)
+else:
+    logger.info("GOOGLE_API_KEY loaded successfully.")
+    try:
+        # Explicitly configure both libraries
+        genai.configure(api_key=GEMINI_API_KEY)
+        generative.configure(api_key=GEMINI_API_KEY)
+        logger.info("Google AI libraries configured with API key.")
+    except Exception as e:
+        logger.error(f"Error configuring Google AI libraries: {e}")
+
 MODEL = "gemini-2.0-flash-exp"  # For multimodal
 
-client = genai.Client(
-  http_options={
+# Initialize the client - it should now use the configured key
+# No need to pass api_key here if genai.configure was successful
+client = genai.Client(http_options={
     'api_version': 'v1alpha',
-  }
-)
+})
 
 config = {
     "embedder": {
@@ -67,47 +80,11 @@ def get_user_id(session_id):
     """Return the fixed user ID for all sessions."""
     return FIXED_USER_ID
 
-# def add_to_memory(messages, user_id, metadata=None):
-#     """Add conversation to memory and return memory ID, handling only the assistant role."""
-#     if metadata is None:
-#         metadata = {"category": "tutoring_session"}
-#     logger(f"Adding to memory: {messages}, user_id: {user_id}, metadata: {metadata}")
-#     result = memory.add(messages, user_id=user_id, metadata=metadata)
-#     logger(f"Added memory: {result}")
-#     return result.get("id") if result else None
-
-# def query_memory(query, user_id):
-#     """Search for relevant memories based on the query."""
-#     response = memory.search(query=query, user_id=user_id)
-    
-#     # Handle the correct result structure with 'results' key
-#     if isinstance(response, dict) and "results" in response:
-#         result_memories = response["results"]
-#     else:
-#         # Fallback handling if structure is different
-#         result_memories = response if isinstance(response, list) else []
-    
-#     return result_memories
-
-# # Define the tool (function) for memory querying
-# tool_query_memory = {
-#     "function_declarations": [
-#         {
-#             "name": "query_memory",
-#             "description": "Query the memory database to retrieve relevant past interactions with the user.",
-#             "parameters": {
-#                 "type": "OBJECT",
-#                 "properties": {
-#                     "query": {
-#                         "type": "STRING",
-#                         "description": "The query string to search the memory."
-#                     }
-#                 },
-#                 "required": ["query"]
-#             }
-#         }
-#     ]
-# }
+# Define a stub function for add_to_memory to avoid undefined name error
+def add_to_memory(messages, user_id, metadata=None):
+    """Stub function for memory functionality."""
+    logger.info(f"Would add to memory: {messages}, user_id: {user_id}")
+    return "memory-id-123"  # Return a dummy memory ID
 
 async def gemini_session_handler(websocket: WebSocketServerProtocol):
     try:
@@ -117,24 +94,30 @@ async def gemini_session_handler(websocket: WebSocketServerProtocol):
         
         config_message = await websocket.recv()
         config_data = json.loads(config_message)
-        config = config_data.get("setup", {})
+        # Extract setup config, but don't overwrite the main config dict
+        session_config_setup = config_data.get("setup", {})
+        logger.info(f"Received session config: {session_config_setup}")
 
-        config["system_instruction"] = """You are a helpful math tutor. Before answering any questions, you MUST first use the query_memory tool to check if we have discussed similar topics or concepts before with this student.
+        # Prepare the Gemini session config, including system instruction
+        gemini_session_config = {
+            "system_instruction": """You are a helpful math tutor. Before answering any questions, you MUST first use the query_memory tool to check if we have discussed similar topics or concepts before with this student.
 
-        If relevant past discussions are found:
-        1. Reference the previous context to maintain continuity in the tutoring
-        2. Build upon previously explained concepts
-        3. Remind the student of relevant points we covered before
+            If relevant past discussions are found:
+            1. Reference the previous context to maintain continuity in the tutoring
+            2. Build upon previously explained concepts
+            3. Remind the student of relevant points we covered before
 
-        If no relevant past discussions are found:
-        1. Start with foundational explanations
-        2. Break down complex concepts into simpler parts
-        3. Use clear examples and step-by-step solutions
+            If no relevant past discussions are found:
+            1. Start with foundational explanations
+            2. Break down complex concepts into simpler parts
+            3. Use clear examples and step-by-step solutions
 
-        Always be patient, encouraging, and adapt your explanations based on the student's demonstrated understanding from past interactions. Focus on helping the student develop strong mathematical intuition and problem-solving skills.
+            Always be patient, encouraging, and adapt your explanations based on the student's demonstrated understanding from past interactions. Focus on helping the student develop strong mathematical intuition and problem-solving skills.
 
-        """
-        # config["tools"] = [tool_query_memory]
+            """,
+            # Add other relevant session config items here if needed
+            # e.g., "temperature": session_config_setup.get("temperature", 0.1)
+        }
         
         # Initialize audio buffers and control flags
         has_user_audio = False
@@ -142,12 +125,20 @@ async def gemini_session_handler(websocket: WebSocketServerProtocol):
         has_assistant_audio = False
         assistant_audio_buffer = b''
         should_accumulate_user_audio = True  # Control flag for user audio accumulation
+        
+        # Initialize image handling
+        has_webcam_image = False
+        has_whiteboard_image = False
+        webcam_image_data = None
+        whiteboard_image_data = None
 
-        async with client.aio.live.connect(model=MODEL, config=config) as session:
+        # Pass the prepared config to the connect method
+        async with client.aio.live.connect(model=MODEL, config=gemini_session_config) as session:
             logger.info(f"Connected to Gemini API for user {user_id}")
 
             async def send_to_gemini():
                 nonlocal has_user_audio, user_audio_buffer, should_accumulate_user_audio
+                nonlocal has_webcam_image, has_whiteboard_image, webcam_image_data, whiteboard_image_data
                 try:
                     async for message in websocket:
                         try:
@@ -164,11 +155,11 @@ async def gemini_session_handler(websocket: WebSocketServerProtocol):
                                                 audio_chunk = base64.b64decode(chunk["data"])
                                                 has_user_audio = True
                                                 user_audio_buffer += audio_chunk
-                                                #logger(f"Added {len(audio_chunk)} bytes to user audio buffer. Total: {len(user_audio_buffer)}")
+                                                #logger.info(f"Added {len(audio_chunk)} bytes to user audio buffer. Total: {len(user_audio_buffer)}")
                                             except Exception as e:
                                                 logger.error(f"Error processing audio chunk: {e}")
                                         #else:
-                                            #logger("Skipping audio accumulation while assistant is responding")
+                                            #logger.info("Skipping audio accumulation while assistant is responding")
                                         
                                         # Always send to Gemini regardless of accumulation
                                         await session.send(input={
@@ -176,17 +167,47 @@ async def gemini_session_handler(websocket: WebSocketServerProtocol):
                                             "data": chunk["data"]
                                         })
                                     
-                                    # Handle image input
+                                    # Handle image input (webcam or whiteboard)
                                     elif chunk["mime_type"].startswith("image/"):
-                                        current_conversation.append({
-                                            "role": "user", 
-                                            "content": "[Image shared by user]"
-                                        })
-                                        
-                                        await session.send(input={
-                                            "mime_type": chunk["mime_type"],
-                                            "data": chunk["data"]
-                                        })
+                                        try:
+                                            # Determine the type of image from metadata if available
+                                            image_type = chunk.get("metadata", {}).get("type", "unknown")
+                                            
+                                            # Log the image type
+                                            logger.info(f"Received image of type: {image_type}")
+                                            
+                                            # Store image data based on type
+                                            if image_type == "webcam":
+                                                has_webcam_image = True
+                                                webcam_image_data = chunk["data"]
+                                                current_conversation.append({
+                                                    "role": "user", 
+                                                    "content": "[Webcam image shared by user]"
+                                                })
+                                            elif image_type == "whiteboard":
+                                                has_whiteboard_image = True
+                                                whiteboard_image_data = chunk["data"]
+                                                current_conversation.append({
+                                                    "role": "user", 
+                                                    "content": "[Whiteboard content shared by user]"
+                                                })
+                                            else:
+                                                # Default handling for unknown image types
+                                                current_conversation.append({
+                                                    "role": "user", 
+                                                    "content": "[Image shared by user]"
+                                                })
+                                            
+                                            # Send to Gemini
+                                            await session.send(input={
+                                                "mime_type": chunk["mime_type"],
+                                                "data": chunk["data"],
+                                                "metadata": {"type": image_type}  # Forward the metadata
+                                            })
+                                            
+                                            logger.info(f"Successfully sent {image_type} image to Gemini")
+                                        except Exception as e:
+                                            logger.error(f"Error processing image: {e}")
                             
                             # Handle text input
                             elif "text" in data:
@@ -200,6 +221,43 @@ async def gemini_session_handler(websocket: WebSocketServerProtocol):
                                     "mime_type": "text/plain",
                                     "data": text_content
                                 })
+                            
+                            # Handle whiteboard/webcam data from frontend session
+                            elif "sessionData" in data:
+                                session_data = data["sessionData"]
+                                logger.info(f"Received session data from frontend")
+                                
+                                # Process whiteboard image if available
+                                if "whiteboard" in session_data and session_data["whiteboard"]:
+                                    try:
+                                        whiteboard_img = session_data["whiteboard"]
+                                        # Remove data URL prefix if present (e.g., "data:image/png;base64,")
+                                        if "," in whiteboard_img:
+                                            whiteboard_img = whiteboard_img.split(",")[1]
+                                        
+                                        has_whiteboard_image = True
+                                        whiteboard_image_data = whiteboard_img
+                                        
+                                        # Send the whiteboard image to Gemini
+                                        await session.send(input={
+                                            "mime_type": "image/png",
+                                            "data": whiteboard_img,
+                                            "metadata": {"type": "whiteboard"}
+                                        })
+                                        
+                                        logger.info("Successfully sent whiteboard image from session data")
+                                    except Exception as e:
+                                        logger.error(f"Error processing whiteboard image from session data: {e}")
+                                
+                                # Handle other session data if needed
+                                if "messages" in session_data:
+                                    logger.info(f"Session contains {len(session_data['messages'])} messages")
+                                
+                                # Acknowledge receipt
+                                await websocket.send(json.dumps({
+                                    "status": "session_data_received",
+                                    "success": True
+                                }))
                                 
                         except Exception as e:
                             logger.error(f"Error sending to Gemini: {e}")
@@ -211,6 +269,7 @@ async def gemini_session_handler(websocket: WebSocketServerProtocol):
 
             async def receive_from_gemini():
                 nonlocal has_assistant_audio, assistant_audio_buffer, has_user_audio, user_audio_buffer, should_accumulate_user_audio
+                nonlocal has_webcam_image, has_whiteboard_image, webcam_image_data, whiteboard_image_data
                 try:
                     while True:
                         try:
@@ -246,23 +305,38 @@ async def gemini_session_handler(websocket: WebSocketServerProtocol):
                                         
                                         elif hasattr(part, 'inline_data') and part.inline_data is not None:
                                             try:
-                                                # Stop user audio accumulation when assistant starts responding with audio
-                                                should_accumulate_user_audio = False
+                                                # Process inline data based on mime type
+                                                mime_type = part.inline_data.mime_type
                                                 
-                                                # Get the raw binary audio data
-                                                audio_data = part.inline_data.data
+                                                if mime_type.startswith("audio/"):
+                                                    # Stop user audio accumulation when assistant starts responding with audio
+                                                    should_accumulate_user_audio = False
+                                                    
+                                                    # Get the raw binary audio data
+                                                    audio_data = part.inline_data.data
+                                                    
+                                                    # Base64 encode for the client
+                                                    base64_audio = base64.b64encode(audio_data).decode('utf-8')
+                                                    await websocket.send(json.dumps({
+                                                        "audio": base64_audio,
+                                                    }))
+                                                    
+                                                    # Accumulate assistant's audio (raw binary)
+                                                    has_assistant_audio = True
+                                                    assistant_audio_buffer += audio_data
                                                 
-                                                # Base64 encode for the client
-                                                base64_audio = base64.b64encode(audio_data).decode('utf-8')
-                                                await websocket.send(json.dumps({
-                                                    "audio": base64_audio,
-                                                }))
-                                                
-                                                # Accumulate assistant's audio (raw binary)
-                                                has_assistant_audio = True
-                                                assistant_audio_buffer += audio_data
+                                                elif mime_type.startswith("image/"):
+                                                    # Handle image responses from the model
+                                                    image_data = part.inline_data.data
+                                                    base64_image = base64.b64encode(image_data).decode('utf-8')
+                                                    await websocket.send(json.dumps({
+                                                        "image": base64_image,
+                                                        "mime_type": mime_type
+                                                    }))
+                                                    logger.info(f"Sent image response to client, mime type: {mime_type}")
+                                            
                                             except Exception as e:
-                                                logger.error(f"Error processing assistant audio: {e}")
+                                                logger.error(f"Error processing assistant response data: {e}")
 
                                 if response.server_content and response.server_content.turn_complete:
                                     logger.info('\n<Turn complete>')
@@ -306,21 +380,47 @@ async def gemini_session_handler(websocket: WebSocketServerProtocol):
                                             assistant_text = "Assistant audio processing error."
                                     
                                     # Add to memory if we have both parts of the conversation
+                                    memory_data = []
+                                    
+                                    # Add audio conversation if available
                                     if user_text and assistant_text:
-                                        messages = [
+                                        memory_data.extend([
                                             {"role": "user", "content": user_text},
                                             {"role": "assistant", "content": assistant_text}
-                                        ]
-                                        add_to_memory(messages, user_id)
-                                        logger.info('\n<Turn complete, memory updated>')
+                                        ])
+                                    
+                                    # Add image information if available
+                                    if has_webcam_image or has_whiteboard_image:
+                                        image_metadata = []
+                                        if has_webcam_image:
+                                            image_metadata.append("webcam image")
+                                        if has_whiteboard_image:
+                                            image_metadata.append("whiteboard content")
+                                        
+                                        if image_metadata:
+                                            memory_data.append({
+                                                "role": "system",
+                                                "content": f"User shared: {', '.join(image_metadata)}"
+                                            })
+                                    
+                                    # Save to memory if we have data
+                                    if memory_data:
+                                        add_to_memory(memory_data, user_id)
+                                        logger.info(f"Turn complete, memory updated with {len(memory_data)} items")
                                     else:
-                                        logger.info("Skipping memory update: Missing user or assistant text")
+                                        logger.info("Skipping memory update: No data to add")
                                     
                                     # Reset audio states and buffers
                                     has_user_audio = False
                                     user_audio_buffer = b''
                                     has_assistant_audio = False
                                     assistant_audio_buffer = b''
+                                    
+                                    # Reset image states
+                                    has_webcam_image = False
+                                    has_whiteboard_image = False
+                                    webcam_image_data = None
+                                    whiteboard_image_data = None
                                     
                                     # Re-enable user audio accumulation for the next turn
                                     should_accumulate_user_audio = True
@@ -349,6 +449,10 @@ async def gemini_session_handler(websocket: WebSocketServerProtocol):
 
 def transcribe_audio(audio_data):
     """Transcribes audio using Gemini 1.5 Flash."""
+    # Ensure API key is configured before using the model
+    if not GEMINI_API_KEY:
+        logger.error("Transcription failed: GOOGLE_API_KEY not set.")
+        return "Transcription failed due to missing API key."
     try:
         # Make sure we have valid audio data
         if not audio_data:
@@ -361,7 +465,7 @@ def transcribe_audio(audio_data):
             # This is binary data that needs conversion
             return "Invalid audio data format."
             
-        # Create a client specific for transcription
+        # Create a client specific for transcription - uses globally configured key
         transcription_client = generative.GenerativeModel(model_name="gemini-2.0-flash-lite")
         
         prompt = """Generate a transcript of the speech. 
@@ -419,6 +523,11 @@ def convert_pcm_to_wav(pcm_data, is_user_input=False):
         return None
     
 async def main() -> None:
+    # Ensure API key is available before starting server
+    if not GEMINI_API_KEY:
+        logger.error("Cannot start server: GOOGLE_API_KEY is not set.")
+        return
+
     # Use explicit IPv4 address and handle deprecation
     server = await websockets.server.serve(
         gemini_session_handler,
