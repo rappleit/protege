@@ -5,8 +5,8 @@ import Header from '@/components/Header';
 import RecordingControls from '@/components/RecordingControls';
 import WhiteboardTool from '@/components/WhiteboardTool';
 import PersonaSection from '@/components/live-session/PersonaSection';
-import SessionInfoTabs from '@/components/live-session/SessionInfoTabs';
-import RecordingSection from '@/components/live-session/RecordingSection';
+import ProgressSection from '@/components/live-session/ProgressSection';
+import TranscriptSection from '@/components/live-session/TranscriptSection';
 import { getInitialMessage, getFollowUpQuestion } from '@/utils/messageUtils';
 import { generateFeedback } from '@/utils/feedbackUtils';
 import { toast } from 'sonner';
@@ -14,7 +14,6 @@ import { toast } from 'sonner';
 const LiveSession = () => {
   const navigate = useNavigate();
   const { topic, selectedPersona, setScore, setFeedback } = useSession();
-  const [showWhiteboard, setShowWhiteboard] = useState(false);
   const [messages, setMessages] = useState<string[]>([]);
   const [isPersonaThinking, setIsPersonaThinking] = useState(false);
   const [userMessages, setUserMessages] = useState<{text: string; sender: 'user' | 'persona'}[]>([]);
@@ -123,30 +122,36 @@ const LiveSession = () => {
       <Header showTopic />
       
       <main className="flex-1 flex flex-col p-4 md:p-6 relative">
-        <div className="flex-1 flex flex-col md:flex-row gap-6">
-          <div className="flex flex-col gap-2 w-full md:w-1/3">
+        <div className="flex-1 flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col gap-4 w-full md:w-1/4">
             <PersonaSection />
-            <SessionInfoTabs />
+            <ProgressSection />
           </div>
-          <RecordingSection 
-            showWhiteboard={showWhiteboard}
-            onToggleWhiteboard={() => setShowWhiteboard(!showWhiteboard)}
-            onMessagesUpdate={handleMessageUpdate}
-            messages={userMessages}
-          />
-        </div>
-        
-        <WhiteboardTool 
-          isOpen={showWhiteboard} 
-          onClose={() => setShowWhiteboard(false)} 
-          ref={whiteboardRef}
-        />
-        
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2">
-          <RecordingControls 
-            onSessionEnd={handleSessionEnd}
-            onSendData={handleSendAllData}
-          />
+          
+          <div className="w-full md:w-1/4">
+            <TranscriptSection messages={userMessages} />
+          </div>
+          
+          <div className="w-full md:w-2/4 flex flex-col gap-4">
+            <div className=" rounded-xl shadow-md p-4 flex-1 bg-gray-800">
+              <h2 className="text-xl font-bold mb-4 text-scholarly-gold">Whiteboard</h2>
+              <div className="h-[450px] ">
+                <WhiteboardTool 
+                  ref={whiteboardRef}
+                  isPopup={false}
+                  className="bg-white rounded-lg"
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-center">
+              <RecordingControls 
+                onSessionEnd={handleSessionEnd}
+                onSendData={handleSendAllData}
+                className="w-full"
+              />
+            </div>
+          </div>
         </div>
       </main>
     </div>

@@ -222,8 +222,13 @@ const RecordingControls: React.FC<RecordingControlsProps> = ({
   };
   
   return (
-    <div className={cn('flex flex-col items-center p-4 rounded-lg bg-scholarly-navy/80 backdrop-blur border border-scholarly-gold/20 shadow-lg shadow-scholarly-gold/10', className)}>
-      <div className="flex items-center gap-4 mb-4">
+    <div className={cn(
+      'rpg-card flex flex-col items-center p-4 bg-gray-800', 
+      className
+    )}>
+      <div className="rpg-gradient" />
+      
+      <div className="relative flex items-center gap-4 mb-4 z-10">
         <div className="w-20 text-center">
           <p className="text-xl font-medium text-scholarly-parchment">{formatTime(recordingTime)}</p>
           <p className="text-xs text-scholarly-gold/80">Recording</p>
@@ -296,7 +301,7 @@ const RecordingControls: React.FC<RecordingControlsProps> = ({
         </div>
       </div>
       
-      <div className="flex gap-2">
+      <div className="flex gap-2 z-10">
         {recordingTime > 0 && (
           <Button 
             onClick={stopRecording}

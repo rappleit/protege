@@ -13,15 +13,15 @@ const PersonaSection = () => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
-      className="w-full h-2/3 bg-card rounded-xl shadow-md p-6 flex flex-col"
+      className="w-full h-2/3 bg-card rounded-xl shadow-md p-6 flex flex-col bg-gray-800"
     >
       <div className="flex items-center gap-4 mb-6">
         <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white ${personaDetails.color}`}>
-          <div className="text-xl font-bold">{personaDetails.name.charAt(0)}</div>
+          <div className="text-xl font-bold text-scholarly-gold">{personaDetails.name.charAt(0)}</div>
         </div>
         <div>
-          <h2 className="text-xl font-bold">{personaDetails.name}</h2>
-          <p className="text-sm text-muted-foreground">{personaDetails.title}</p>
+          <h2 className="text-xl font-bold text-scholarly-gold">{personaDetails.name}</h2>
+          <p className="text-sm text-white">{personaDetails.title}</p>
         </div>
       </div>
       

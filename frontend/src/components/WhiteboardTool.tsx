@@ -6,12 +6,14 @@ import { Trash2, Download, Undo, Pencil, Square, Circle } from 'lucide-react';
 type Shape = 'pencil' | 'rectangle' | 'circle';
 
 type WhiteboardToolProps = {
-  isOpen: boolean;
-  onClose: () => void;
+  isPopup?: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
   className?: string;
 };
 
-const WhiteboardTool = forwardRef<HTMLCanvasElement | null, WhiteboardToolProps>(({ isOpen, onClose, className }, ref) => {
+const WhiteboardTool = forwardRef<HTMLCanvasElement | null, WhiteboardToolProps>(
+  ({ isPopup = false, isOpen = true, onClose, className }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [context, setContext] = useState<CanvasRenderingContext2D | null>(null);
@@ -224,12 +226,12 @@ const WhiteboardTool = forwardRef<HTMLCanvasElement | null, WhiteboardToolProps>
   
   return (
     <div className={cn(
-      'fixed bottom-24 left-4 right-4 md:left-auto md:right-4 md:w-[600px] bg-white rounded-xl shadow-lg border p-3 z-10',
+      isPopup ? 'fixed bottom-24 left-4 right-4 md:left-auto md:right-4 md:w-[600px] bg-white rounded-xl shadow-lg border p-3 z-10' : 'w-full h-full',
       !isOpen && 'hidden',
       className
     )}>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-medium">Whiteboard</h3>
+        <h3 className="font-medium">{isPopup ? 'Whiteboard' : ''}</h3>
         <div className="flex gap-2">
           <Button 
             variant="outline" 
@@ -280,11 +282,13 @@ const WhiteboardTool = forwardRef<HTMLCanvasElement | null, WhiteboardToolProps>
           <Button variant="outline" size="sm" className="p-1" onClick={downloadCanvas}>
             <Download size={16} />
           </Button>
-          <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
+          {isPopup && onClose && (
+            <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
+          )}
         </div>
       </div>
       
-      <div className="w-full h-80 bg-gray-100 rounded-lg whiteboard-container">
+      <div className="w-full h-[calc(100%-40px)] bg-gray-100 rounded-lg whiteboard-container">
         <canvas
           ref={canvasRef}
           className="w-full h-full rounded-lg cursor-crosshair touch-none"
