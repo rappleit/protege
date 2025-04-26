@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import RecordingControls from '@/components/RecordingControls';
 import WhiteboardTool from '@/components/WhiteboardTool';
 import PersonaSection from '@/components/live-session/PersonaSection';
+import SessionInfoTabs from '@/components/live-session/SessionInfoTabs';
 import RecordingSection from '@/components/live-session/RecordingSection';
 import { getInitialMessage, getFollowUpQuestion } from '@/utils/messageUtils';
 import { generateFeedback } from '@/utils/feedbackUtils';
@@ -118,12 +119,15 @@ const LiveSession = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-900">
       <Header showTopic />
       
       <main className="flex-1 flex flex-col p-4 md:p-6 relative">
         <div className="flex-1 flex flex-col md:flex-row gap-6">
-          <PersonaSection />
+          <div className="flex flex-col gap-2 w-full md:w-1/3">
+            <PersonaSection />
+            <SessionInfoTabs />
+          </div>
           <RecordingSection 
             showWhiteboard={showWhiteboard}
             onToggleWhiteboard={() => setShowWhiteboard(!showWhiteboard)}
