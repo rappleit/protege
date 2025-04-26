@@ -10,6 +10,9 @@ lerna-debug.log*
 # Environment variables
 .env
 
+#Virtual environment
+venv
+
 node_modules
 dist
 dist-ssr
