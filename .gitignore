@@ -10,6 +10,15 @@ lerna-debug.log*
 # Environment variables
 .env
 
+# virtual environment
+venv
+
+# pycache
+__pycache__
+
+# test
+/test
+
 node_modules
 dist
 dist-ssr
