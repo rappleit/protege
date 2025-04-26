@@ -53,7 +53,7 @@ const WebcamSection = () => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
-      className="w-full bg-card rounded-xl shadow-md p-4 flex flex-col bg-gray-800"
+      className="w-full bg-card rounded-xl shadow-md p-4 flex flex-col bg-scholarly-navy"
     >
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-medium text-scholarly-gold">Your Camera</h3>

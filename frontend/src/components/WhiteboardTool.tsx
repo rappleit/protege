@@ -226,7 +226,7 @@ const WhiteboardTool = forwardRef<HTMLCanvasElement | null, WhiteboardToolProps>
   
   return (
     <div className={cn(
-      isPopup ? 'fixed bottom-24 left-4 right-4 md:left-auto md:right-4 md:w-[600px] bg-white rounded-xl shadow-lg border p-3 z-10' : 'w-full h-full',
+      isPopup ? 'fixed bottom-24 left-4 right-4 md:left-auto md:right-4 md:w-[600px] bg-scholarly-parchment rounded-xl shadow-lg border p-3 z-10' : 'w-full h-full',
       !isOpen && 'hidden',
       className
     )}>
@@ -288,7 +288,7 @@ const WhiteboardTool = forwardRef<HTMLCanvasElement | null, WhiteboardToolProps>
         </div>
       </div>
       
-      <div className="w-full h-[calc(100%-40px)] bg-gray-100 rounded-lg whiteboard-container">
+      <div className="w-full h-[calc(100%-40px)] bg-scholarly-parchment rounded-lg whiteboard-container">
         <canvas
           ref={canvasRef}
           className="w-full h-full rounded-lg cursor-crosshair touch-none"

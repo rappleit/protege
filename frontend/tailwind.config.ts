@@ -19,8 +19,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        'medieval': ['Cinzel', 'serif'],
-        'text': ['Crimson Text', 'serif'],
+        'outfit': ['Outfit', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
