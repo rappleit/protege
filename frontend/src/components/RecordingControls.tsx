@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Button from './Button';
 import { cn } from '@/lib/utils';
-import { Mic, MicOff, CircleStop, Volume2, VolumeX, Send, Upload } from 'lucide-react';
+import { Mic, MicOff, CircleStop, Volume2, VolumeX, Send, Upload, Play, RefreshCw } from 'lucide-react';
 import { useSession } from '@/context/SessionContext';
 import { toast } from 'sonner';
 
@@ -23,6 +23,7 @@ const RecordingControls: React.FC<RecordingControlsProps> = ({
   const [audioError, setAudioError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [sessionStarted, setSessionStarted] = useState(false);
 
   // Refs
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -150,6 +151,11 @@ const RecordingControls: React.FC<RecordingControlsProps> = ({
     }
   };
   
+  const startSession = () => {
+    setSessionStarted(true);
+    toggleRecording();
+  };
+
   const toggleRecording = async () => {
     if (!isRecording) {
       const stream = await setupAudio();
@@ -172,6 +178,28 @@ const RecordingControls: React.FC<RecordingControlsProps> = ({
         stopAudio();
         setIsPaused(true);
       }
+    }
+  };
+  
+  const clearAndRestart = async () => {
+    // Stop current recording
+    stopAudio();
+    
+    // Clear audio data
+    audioChunksRef.current = [];
+    setAudioBlob(null);
+    
+    // Reset recording state
+    setIsPaused(false);
+    
+    // Start a new recording
+    const stream = await setupAudio();
+    if (stream) {
+      setIsRecording(true);
+      toast.success('Recording cleared and restarted');
+    } else {
+      setIsRecording(false);
+      toast.error('Failed to restart recording');
     }
   };
   
@@ -200,10 +228,22 @@ const RecordingControls: React.FC<RecordingControlsProps> = ({
         onSendData(audioBlob || undefined);
       }
       
-      toast.success('All inputs sent to the backend successfully!');
+      toast.success('Response sent successfully!');
+      
+      // Reset audio chunks for next recording
+      audioChunksRef.current = [];
+      setAudioBlob(null);
+      
+      // Restart recording
+      if (isRecording) {
+        const stream = await setupAudio();
+        if (!stream) {
+          setIsRecording(false);
+        }
+      }
     } catch (error) {
       console.error('Error sending data:', error);
-      toast.error('Failed to send inputs to the backend.');
+      toast.error('Failed to send response.');
     } finally {
       setIsSending(false);
     }
@@ -223,119 +263,119 @@ const RecordingControls: React.FC<RecordingControlsProps> = ({
   
   return (
     <div className={cn(
-      'rpg-card flex flex-col items-center p-4 bg-gray-800', 
+      'rpg-card flex flex-col items-center p-4', 
       className
     )}>
       <div className="rpg-gradient" />
       
-      <div className="relative flex items-center gap-4 mb-4 z-10">
-        <div className="w-20 text-center">
-          <p className="text-xl font-medium text-scholarly-parchment">{formatTime(recordingTime)}</p>
-          <p className="text-xs text-scholarly-gold/80">Recording</p>
-        </div>
-        
-        <div className="flex gap-2">
+      {!sessionStarted ? (
+        <div className="flex justify-center z-10 py-4">
           <Button 
-            onClick={toggleRecording}
-            size="sm"
-            variant={isPaused ? "outline" : "default"}
-            className={cn(
-              "rounded-full w-12 h-12 flex items-center justify-center p-0 border-2 border-scholarly-gold/30",
-              isRecording && !isPaused ? "bg-red-500/80 hover:bg-red-600/80" : "bg-scholarly-navy/70 hover:bg-scholarly-navy/90"
+            onClick={startSession}
+            size="lg"
+            variant="default"
+            className="bg-scholarly-navy hover:bg-scholarly-navy/90 text-scholarly-gold border-2 border-scholarly-gold/30 px-8"
+          >
+            <Play size={20} className="mr-2" /> Start Session
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="relative flex items-center gap-4 mb-4 z-10">
+            <div className="w-20 text-center">
+              <p className="text-xl font-medium text-scholarly-parchment">{formatTime(recordingTime)}</p>
+              <p className="text-xs text-scholarly-gold/80">Recording</p>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button 
+                onClick={toggleRecording}
+                size="sm"
+                variant={isPaused ? "outline" : "default"}
+                className={cn(
+                  "rounded-full w-12 h-12 flex items-center justify-center p-0 border-2 border-scholarly-gold/30",
+                  isRecording && !isPaused ? "bg-red-500/80 hover:bg-red-600/80" : "bg-scholarly-navy/70 hover:bg-scholarly-navy/90"
+                )}
+              >
+                {isRecording && !isPaused ? <MicOff size={20} className="text-scholarly-cream" /> : <Mic size={20} className="text-scholarly-gold" />}
+              </Button>
+              
+              <Button 
+                onClick={handleSendData}
+                size="sm"
+                variant="outline"
+                className="rounded-full w-12 h-12 flex items-center justify-center p-0 border-2 border-scholarly-gold/30 bg-scholarly-navy/70 hover:bg-scholarly-navy/90"
+                disabled={isSending}
+              >
+                <Send size={20} className="text-scholarly-gold" />
+              </Button>
+              
+              <Button 
+                onClick={clearAndRestart}
+                size="sm"
+                variant="outline"
+                className="rounded-full w-12 h-12 flex items-center justify-center p-0 border-2 border-scholarly-gold/30 bg-scholarly-navy/70 hover:bg-scholarly-navy/90"
+              >
+                <RefreshCw size={20} className="text-scholarly-gold" />
+              </Button>
+            </div>
+            
+            <div className="w-24 flex items-center justify-center">
+              {isRecording && !isPaused ? (
+                <div className="flex flex-col items-center">
+                  <div className="flex gap-1 mb-1">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div 
+                        key={i}
+                        className="w-1 bg-scholarly-gold rounded-full"
+                        style={{
+                          height: `${Math.min(4 + (i + 1) * 3, 4 + (i + 1) * 3 * audioLevel * 5)}px`,
+                          opacity: audioLevel > i * 0.2 ? 1 : 0.3
+                        }}
+                      ></div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Volume2 size={14} className="text-scholarly-gold/80" />
+                    <p className="text-xs font-medium text-scholarly-gold/80">LIVE</p>
+                  </div>
+                </div>
+              ) : isPaused ? (
+                <div className="flex items-center gap-1">
+                  <VolumeX size={14} className="text-amber-500/80" />
+                  <p className="text-xs font-medium text-amber-500">PAUSED</p>
+                </div>
+              ) : null}
+              
+              {audioError && (
+                <p className="text-xs text-red-500">{audioError}</p>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex gap-2 z-10">
+            <Button 
+              onClick={stopRecording}
+              variant="default"
+              size="sm"
+              className="bg-scholarly-burgundy/80 hover:bg-scholarly-burgundy text-scholarly-cream border-2 border-scholarly-gold/30"
+            >
+              End Session
+            </Button>
+            
+            {audioBlob && process.env.NODE_ENV === 'development' && (
+              <Button
+                onClick={playRecordedAudio}
+                variant="outline"
+                size="sm"
+                className="border-scholarly-gold/30"
+              >
+                Test Audio
+              </Button>
             )}
-          >
-            {isRecording && !isPaused ? <MicOff size={20} className="text-scholarly-cream" /> : <Mic size={20} className="text-scholarly-gold" />}
-          </Button>
-          
-          <Button 
-            onClick={handleSendData}
-            size="sm"
-            variant="outline"
-            className="rounded-full w-12 h-12 flex items-center justify-center p-0 border-2 border-scholarly-gold/30 bg-scholarly-navy/70 hover:bg-scholarly-navy/90"
-            disabled={isSending}
-          >
-            <Upload size={20} className="text-scholarly-gold" />
-          </Button>
-          
-          <Button 
-            onClick={stopRecording}
-            size="sm"
-            variant="outline"
-            className="rounded-full w-12 h-12 flex items-center justify-center p-0 border-2 border-scholarly-gold/30 bg-scholarly-navy/70 hover:bg-scholarly-navy/90"
-            disabled={!isRecording && recordingTime === 0}
-          >
-            <CircleStop size={20} className="text-scholarly-gold" />
-          </Button>
-        </div>
-        
-        <div className="w-24 flex items-center justify-center">
-          {isRecording && !isPaused ? (
-            <div className="flex flex-col items-center">
-              <div className="flex gap-1 mb-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div 
-                    key={i}
-                    className="w-1 bg-scholarly-gold rounded-full"
-                    style={{
-                      height: `${Math.min(4 + (i + 1) * 3, 4 + (i + 1) * 3 * audioLevel * 5)}px`,
-                      opacity: audioLevel > i * 0.2 ? 1 : 0.3
-                    }}
-                  ></div>
-                ))}
-              </div>
-              <div className="flex items-center gap-1">
-                <Volume2 size={14} className="text-scholarly-gold/80" />
-                <p className="text-xs font-medium text-scholarly-gold/80">LIVE</p>
-              </div>
-            </div>
-          ) : isPaused ? (
-            <div className="flex items-center gap-1">
-              <VolumeX size={14} className="text-amber-500/80" />
-              <p className="text-xs font-medium text-amber-500">PAUSED</p>
-            </div>
-          ) : null}
-          
-          {audioError && (
-            <p className="text-xs text-red-500">{audioError}</p>
-          )}
-        </div>
-      </div>
-      
-      <div className="flex gap-2 z-10">
-        {recordingTime > 0 && (
-          <Button 
-            onClick={stopRecording}
-            variant="default"
-            size="sm"
-            className="bg-scholarly-burgundy/80 hover:bg-scholarly-burgundy text-scholarly-cream border-2 border-scholarly-gold/30"
-          >
-            End Session
-          </Button>
-        )}
-        
-        {recordingTime > 0 && (
-          <Button
-            onClick={handleSendData}
-            variant="default"
-            size="sm"
-            className="bg-scholarly-navy hover:bg-scholarly-navy/90 text-scholarly-gold border-2 border-scholarly-gold/30"
-            disabled={isSending}
-          >
-            {isSending ? 'Sending...' : 'Send All Inputs'}
-          </Button>
-        )}
-        
-        {audioBlob && (
-          <Button
-            onClick={playRecordedAudio}
-            variant="outline"
-            size="sm"
-            className="border-scholarly-gold/30"
-          >
-            Test Audio
-          </Button>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

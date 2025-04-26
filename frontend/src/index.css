@@ -1,5 +1,4 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -64,8 +63,12 @@
   }
   
   body {
-    @apply bg-background text-foreground font-outfit;
-    font-family: 'Outfit', sans-serif;
+    @apply bg-background text-foreground;
+    font-family: 'Crimson Text', serif;
+  }
+  
+  .font-medieval {
+    font-family: 'Cinzel', serif;
   }
 }
 
@@ -99,7 +102,7 @@
   }
 
   .rpg-title {
-    @apply text-xl font-bold;
+    @apply text-xl font-bold font-medieval;
   }
 
   .rpg-subtitle {
@@ -115,11 +118,15 @@
   }
   
   .scholarly-heading {
-    @apply font-serif text-scholarly-burgundy;
+    @apply font-medieval text-scholarly-burgundy;
   }
   
   .scholarly-card {
     @apply bg-scholarly-cream border border-scholarly-navy/20 shadow-md;
+  }
+
+  .scholarly-text {
+    @apply font-text;
   }
 }
 

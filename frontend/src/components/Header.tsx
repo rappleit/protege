@@ -26,7 +26,7 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className={cn(
-      'w-full py-4 px-6 flex items-center justify-between bg-gray-900',
+      'w-full py-4 px-6 flex items-center justify-between bg-scholarly-navy',
       className
     )}>
       {showLogo && (
@@ -34,8 +34,8 @@ const Header: React.FC<HeaderProps> = ({
           className="flex items-center cursor-pointer group" 
           onClick={handleLogoClick}
         >
-          <h1 className="text-2xl font-bold text-scholarly-burgundy group-hover:opacity-90 transition-opacity">
-            Protegé<span className="text-scholarly-gold">.</span>
+          <h1 className="text-2xl font-bold text-scholarly-gold group-hover:opacity-90 transition-opacity">
+            Protege<span className="text-scholarly-burgundy">.</span>
           </h1>
         </div>
       )}
@@ -46,9 +46,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
       )}
       
-      <div className="w-24">
-        {/* Placeholder for right side content */}
-      </div>
+
     </header>
   );
 };
