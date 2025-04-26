@@ -9,7 +9,6 @@ import ProgressSection from '@/components/live-session/ProgressSection';
 import TranscriptSection from '@/components/live-session/TranscriptSection';
 import WebcamSection from '@/components/live-session/WebcamSection';
 import { getInitialMessage } from '@/utils/messageUtils';
-import { generateFeedback } from '@/utils/feedbackUtils';
 import { toast } from 'sonner';
 
 const LiveSession = () => {
@@ -36,8 +35,7 @@ const LiveSession = () => {
   const handleSessionEnd = () => {
     const generatedScore = Math.floor(Math.random() * 31) + 65;
     setScore(generatedScore);
-    const generatedFeedback = generateFeedback(selectedPersona, generatedScore);
-    setFeedback(generatedFeedback);
+    setFeedback([""]);  
     navigate('/results');
   };
   
