@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -39,7 +38,7 @@ const Results = () => {
           className="w-full max-w-3xl"
         >
           <div className="text-center mb-12">
-            <h1 className="text-3xl font-bold mb-3">Your Results</h1>
+            <h1 className="text-3xl font-bold mb-3 font-medieval">Your Results</h1>
             <p className="text-muted-foreground">
               Here's how well you explained "{topic}" to {personaDetails.name}.
             </p>
@@ -49,15 +48,15 @@ const Results = () => {
             <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center mb-8">
               <div className="text-center">
                 <div className={`w-20 h-20 rounded-full flex items-center justify-center text-white ${personaDetails.color} mx-auto`}>
-                  <div className="text-2xl font-bold">{personaDetails.name.charAt(0)}</div>
+                  <div className="text-2xl font-bold text-scholarly-gold">{personaDetails.name.charAt(0)}</div>
                 </div>
-                <h3 className="mt-2 font-medium">{personaDetails.name}</h3>
+                <h3 className="mt-2 font-medium font-medieval">{personaDetails.name}</h3>
                 <p className="text-xs text-muted-foreground">{personaDetails.title}</p>
               </div>
               
               <div className="flex-1">
                 <div className="flex items-end justify-between mb-2">
-                  <h3 className="font-bold text-lg">Understanding Score</h3>
+                  <h3 className="font-bold text-lg font-medieval">Understanding Score</h3>
                   <span className="text-3xl font-bold">{score}%</span>
                 </div>
                 <Progress value={score} className="h-3" />
@@ -68,7 +67,7 @@ const Results = () => {
             </div>
             
             <div>
-              <h3 className="text-lg font-bold mb-4 fancy-border inline-block">Personalized Feedback</h3>
+              <h3 className="text-lg font-bold mb-4 fancy-border inline-block font-medieval">Personalized Feedback</h3>
               <div className="space-y-3">
                 {feedback.map((item, index) => (
                   <motion.div
