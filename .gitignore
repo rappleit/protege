@@ -12,6 +12,7 @@ lerna-debug.log*
 
 #Virtual environment
 venv
+__pycache__/
 
 node_modules
 dist
