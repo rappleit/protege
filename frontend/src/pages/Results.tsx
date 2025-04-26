@@ -27,24 +27,24 @@ const Results = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-scholarly-slate">
+    <div className="min-h-screen flex flex-col bg-scholarly-charcoal  bg-gradient-to-b from-scholarly-charcoal to-scholarly-navy/90">
       <Header showTopic />
       
-      <main className="flex-1 flex flex-col items-center p-6">
+      <main className="flex-1 flex flex-col items-center p-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="w-full max-w-3xl"
         >
-          <div className="text-center mb-12">
-            <h1 className="text-3xl font-bold mb-3 font-medieval">Your Results</h1>
-            <p className="text-muted-foreground">
+          <div className="text-center mb-12 ">
+            <h1 className="text-3xl font-bold mb-3 font-outfit text-white">Your Results</h1>
+            <p className="text-muted-foreground text-scholarly-parchment">
               Here's how well you explained "{topic}" to {personaDetails.name}.
             </p>
           </div>
           
-          <div className="bg-card shadow-md rounded-xl p-8 mb-8">
+          <div className="bg-card shadow-md rounded-xl p-8 mb-8 bg-scholarly-navy text-scholarly-cream">
             <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center mb-8">
               <div className="text-center">
                 <div className={`w-20 h-20 rounded-full flex items-center justify-center text-white ${personaDetails.color} mx-auto`}>
@@ -67,7 +67,7 @@ const Results = () => {
             </div>
             
             <div>
-              <h3 className="text-lg font-bold mb-4 fancy-border inline-block font-medieval">Personalized Feedback</h3>
+              <h3 className="text-lg font-bold mb-4 fancy-border inline-block font-outfit">Personalized Feedback</h3>
               <div className="space-y-3">
                 {feedback.map((item, index) => (
                   <motion.div
@@ -75,7 +75,7 @@ const Results = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
-                    className="bg-muted/40 p-4 rounded-lg"
+                    className="bg-scholarly-charcoal/50 border-scholarly-gold/40  p-4 rounded-lg"
                   >
                     <p>{item}</p>
                   </motion.div>
