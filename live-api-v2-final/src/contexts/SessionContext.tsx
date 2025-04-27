@@ -11,6 +11,12 @@ export type PersonaDetails = {
   gender: string;
 };
 
+export type TranscriptEntry = {
+  role: 'user' | 'model';
+  text: string;
+  timestamp: Date;
+};
+
 type SessionContextType = {
   topic: string;
   setTopic: (topic: string) => void;
@@ -32,6 +38,8 @@ type SessionContextType = {
   setScore: (score: number) => void;
   feedback: string[];
   setFeedback: (feedback: string[]) => void;
+  transcript: TranscriptEntry[];
+  addTranscriptEntry: (entry: Omit<TranscriptEntry, 'timestamp'>) => void;
   getPersonaDetails: (persona: Persona) => PersonaDetails;
   resetSession: () => void;
 };
@@ -66,16 +74,17 @@ export const personaData: Record<Persona, PersonaDetails> = {
 };
 
 export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [topic, setTopic] = useState<string>('');
-  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
-  const [customPersonaName, setCustomPersonaName] = useState<string>(personaData.custom.name);
-  const [customPersonaTitle, setCustomPersonaTitle] = useState<string>(personaData.custom.title);
-  const [customPersonaDescription, setCustomPersonaDescription] = useState<string>(personaData.custom.description);
-  const [customPersonaGender, setCustomPersonaGender] = useState<string>(personaData.custom.gender);
+  const [topic, setTopic] = useState<string>('Explain quantum physics');
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>('professor');
+  const [customPersonaName, setCustomPersonaName] = useState<string>('');
+  const [customPersonaTitle, setCustomPersonaTitle] = useState<string>('');
+  const [customPersonaDescription, setCustomPersonaDescription] = useState<string>('');
+  const [customPersonaGender, setCustomPersonaGender] = useState<string>('male');
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [recordingTime, setRecordingTime] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
   const [feedback, setFeedback] = useState<string[]>([]);
+  const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
 
   const getPersonaDetails = (persona: Persona): PersonaDetails => {
     if (persona === 'custom') {
@@ -83,33 +92,38 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
         name: customPersonaName || personaData.custom.name,
         title: customPersonaTitle || personaData.custom.title,
         description: customPersonaDescription || personaData.custom.description,
-        gender: customPersonaGender || personaData.custom.gender,
         imageUrl: personaData.custom.imageUrl,
         color: personaData.custom.color,
+        gender: customPersonaGender || personaData.custom.gender,
       };
     }
     return personaData[persona];
   };
 
+  const addTranscriptEntry = (entry: Omit<TranscriptEntry, 'timestamp'>) => {
+    setTranscript(prev => [...prev, { ...entry, timestamp: new Date() }]);
+  };
+
   const resetSession = () => {
-    setTopic('');
-    setSelectedPersona(null);
-    setCustomPersonaName(personaData.custom.name);
-    setCustomPersonaTitle(personaData.custom.title);
-    setCustomPersonaDescription(personaData.custom.description);
-    setCustomPersonaGender(personaData.custom.gender);
+    setTopic('Explain quantum physics');
+    setSelectedPersona('professor');
+    setCustomPersonaName('');
+    setCustomPersonaTitle('');
+    setCustomPersonaDescription('');
+    setCustomPersonaGender('male');
     setIsRecording(false);
     setRecordingTime(0);
     setScore(0);
     setFeedback([]);
+    setTranscript([]);
   };
 
   return (
-    <SessionContext.Provider 
-      value={{ 
-        topic, 
+    <SessionContext.Provider
+      value={{
+        topic,
         setTopic,
-        selectedPersona, 
+        selectedPersona,
         setSelectedPersona,
         customPersonaName,
         setCustomPersonaName,
@@ -127,8 +141,10 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setScore,
         feedback,
         setFeedback,
+        transcript,
+        addTranscriptEntry,
         getPersonaDetails,
-        resetSession
+        resetSession,
       }}
     >
       {children}

@@ -19,7 +19,12 @@ import {
   MultimodalLiveAPIClientConnection,
   MultimodalLiveClient,
 } from "../lib/multimodal-live-client";
-import { LiveConfig, ServerContent } from "../multimodal-live-types";
+import {
+  LiveConfig,
+  ServerContent,
+  isModelTurn,
+  ModelTurn,
+} from "../multimodal-live-types";
 import { Part } from '@google/generative-ai';
 import { AudioStreamer } from "../lib/audio-streamer";
 import { audioContext } from "../lib/utils";
@@ -74,7 +79,13 @@ export function useLiveAPI({
   url,
   apiKey,
 }: MultimodalLiveAPIClientConnection): UseLiveAPIResults {
-  const { topic, selectedPersona, getPersonaDetails } = useSession();
+  const { 
+    topic, 
+    selectedPersona, 
+    getPersonaDetails, 
+    addTranscriptEntry, 
+  } = useSession();
+  
   const client = useMemo(
     () => new MultimodalLiveClient({ url, apiKey }),
     [url, apiKey],
@@ -124,7 +135,7 @@ export function useLiveAPI({
   });
 
   const [volume, setVolume] = useState(0);
-  const [isModelTurn, setIsModelTurn] = useState(false);
+  const [isModelTurnState, setIsModelTurnState] = useState(false);
 
   // Effect to update config's systemInstruction AND voice based on topic/persona changes
   useEffect(() => {
@@ -156,13 +167,15 @@ export function useLiveAPI({
     const currentVoiceName =
       config.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig
         ?.voiceName;
+    const currentModality = config.generationConfig?.responseModalities;
 
     // Update config only if the text OR voice actually changes
-    if (newText !== currentText || targetVoiceName !== currentVoiceName) {
-      console.log("Topic, Persona, or Voice changed, updating config:", {
+    if (newText !== currentText || targetVoiceName !== currentVoiceName || currentModality !== "audio") {
+      console.log("Topic, Persona, Voice, or Modality changed, updating config (modality=audio):", {
         topic,
         selectedPersona,
         targetVoiceName,
+        newModality: "audio",
       });
       setConfig((prevConfig) => ({
         ...prevConfig,
@@ -172,6 +185,7 @@ export function useLiveAPI({
         },
         generationConfig: {
           ...prevConfig.generationConfig,
+          responseModalities: "audio", 
           speechConfig: {
             ...prevConfig.generationConfig?.speechConfig,
             voiceConfig: {
@@ -213,30 +227,44 @@ export function useLiveAPI({
     const onClose = () => {
       console.log("LiveAPI Client: Connection closed.");
       setConnected(false);
-      setIsModelTurn(false);
+      setIsModelTurnState(false);
     };
 
     const stopAudioStreamer = () => {
       audioStreamerRef.current?.stop();
-      setIsModelTurn(false);
+      setIsModelTurnState(false);
     };
 
     const onAudio = (data: ArrayBuffer) => {
+      console.log(`Received audio data chunk (${data.byteLength} bytes)`);
       audioStreamerRef.current?.addPCM16(new Uint8Array(data));
     };
 
     const onContent = (content: ServerContent) => {
-      console.log("Content received:", content);
+      console.log("Content received (modality=audio):", content);
+      if (isModelTurn(content)) {
+        console.log(`Received model turn content update with ${content.modelTurn.parts.length} parts.`);
+        content.modelTurn.parts.forEach((part: Part, index: number) => {
+          console.log(`Part ${index} structure:`, JSON.stringify(part, null, 2));
+          // Log if text part unexpectedly appears, but don't add to transcript anymore here
+          if (part.text) {
+            console.warn("Received unexpected text part with audio modality:", part.text);
+          }
+          if (part.inlineData) {
+            console.log(`Part ${index} also contains inlineData (mime: ${part.inlineData.mimeType})`);
+          }
+        });
+      }
     };
 
     const onTurnComplete = () => {
       console.log("Turn complete");
-      setIsModelTurn(false);
+      setIsModelTurnState(false);
     };
 
     const onIsModelTurn = () => {
       console.log("Model turn detected");
-      setIsModelTurn(true);
+      setIsModelTurnState(true);
     };
 
     client
@@ -258,12 +286,12 @@ export function useLiveAPI({
         .off("turncomplete", onTurnComplete)
         .off("ismodelturn", onIsModelTurn);
     };
-  }, [client]);
+  }, [client, addTranscriptEntry]);
 
   const connect = useCallback(async (): Promise<boolean> => {
     const systemInstructionText = config.systemInstruction?.parts?.[0]?.text || "[System instruction text not available]";
     console.log("Final System Instruction being sent:", systemInstructionText);
-    console.log("Attempting to connect with config:", config);
+    console.log("Attempting to connect with config (modality=audio):", JSON.stringify(config, null, 2));
     if (!config) {
       console.error("Connect failed: config has not been set");
       return false;
@@ -291,6 +319,6 @@ export function useLiveAPI({
     connect,
     disconnect,
     volume,
-    isModelTurn,
+    isModelTurn: isModelTurnState,
   };
 }

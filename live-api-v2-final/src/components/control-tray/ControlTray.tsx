@@ -76,11 +76,20 @@ function ControlTray({
   const [muted, setMuted] = useState(false);
   const renderCanvasRef = useRef<HTMLCanvasElement>(null);
   const connectButtonRef = useRef<HTMLButtonElement>(null);
+  const [isCalculatingScore, setIsCalculatingScore] = useState(false);
 
   const { client, connected, connect, disconnect, volume } =
     useLiveAPIContext();
   const navigate = useNavigate();
-  const { setFeedback, setScore, topic, selectedPersona, setTopic, setSelectedPersona } = useSession();
+  const { 
+    setFeedback, 
+    setScore, 
+    topic, 
+    selectedPersona, 
+    setTopic, 
+    setSelectedPersona, 
+    transcript
+  } = useSession();
 
   // Ref to track the current connection status reliably
   const isConnectedRef = useRef(connected);
@@ -102,11 +111,9 @@ function ControlTray({
 
   useEffect(() => {
     const onData = (base64: string) => {
-      // Check the CURRENT connection status via the ref
-      if (!isConnectedRef.current) {
+      if (!isConnectedRef.current || isCalculatingScore) { 
         return;
       }
-      // Add try...catch to handle potential race condition on disconnect
       try {
         client.sendRealtimeInput([
           {
@@ -115,17 +122,14 @@ function ControlTray({
           },
         ]);
       } catch (error) {
-        // Check if the error is the specific WebSocket error we expect
         if ((error as Error)?.message?.includes('WebSocket is not connected')) {
-          // console.warn("Attempted to send audio data after WebSocket closed. Ignored.");
-          // Swallow the error specifically for this case during disconnection
+          // Ignore
         } else {
-          // Log or re-throw other unexpected errors
           console.error("Error sending audio data:", error);
         }
       }
     };
-    if (connected && !muted && audioRecorder) {
+    if (connected && !muted && audioRecorder && !isCalculatingScore) {
       audioRecorder.on("data", onData).on("volume", setInVolume).start();
     } else {
       audioRecorder.stop();
@@ -133,23 +137,19 @@ function ControlTray({
     return () => {
       audioRecorder.off("data", onData).off("volume", setInVolume);
     };
-  }, [connected, client, muted, audioRecorder]);
+  }, [connected, client, muted, audioRecorder, isCalculatingScore]);
 
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.srcObject = activeVideoStream;
     }
-
     let timeoutId = -1;
-
     function sendVideoFrame() {
       const video = videoRef.current;
       const canvas = renderCanvasRef.current;
-
-      if (!video || !canvas) {
+      if (!video || !canvas || !isConnectedRef.current || isCalculatingScore) { 
         return;
       }
-
       const ctx = canvas.getContext("2d")!;
       canvas.width = video.videoWidth * 0.25;
       canvas.height = video.videoHeight * 0.25;
@@ -157,19 +157,28 @@ function ControlTray({
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
         const base64 = canvas.toDataURL("image/jpeg", 1.0);
         const data = base64.slice(base64.indexOf(",") + 1, Infinity);
-        client.sendRealtimeInput([{ mimeType: "image/jpeg", data }]);
+        try {
+           client.sendRealtimeInput([{ mimeType: "image/jpeg", data }]);
+        } catch (error) {
+           if ((error as Error)?.message?.includes('WebSocket is not connected')) {
+             // Ignore
+           } else {
+             console.error("Error sending video data:", error);
+           }
+        }
+       
       }
       if (connected) {
         timeoutId = window.setTimeout(sendVideoFrame, 1000 / 0.5);
       }
     }
-    if (connected && activeVideoStream !== null) {
+    if (connected && activeVideoStream !== null && !isCalculatingScore) { 
       requestAnimationFrame(sendVideoFrame);
     }
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [connected, activeVideoStream, client, videoRef]);
+  }, [connected, activeVideoStream, client, videoRef, isCalculatingScore]);
 
   //handler for swapping from one video-stream to the next
   const changeStreams = (next?: UseMediaStreamResult) => async () => {
@@ -186,67 +195,85 @@ function ControlTray({
   };
 
   const handleEndSession = () => {
-    console.log("End Session clicked");
-    
-    // Ensure we have the minimum required session data
-    if (!topic) {
-      console.log("Setting default topic");
-      setTopic("Example Topic");
-    }
-    
-    if (!selectedPersona) {
-      console.log("Setting default persona");
-      setSelectedPersona("professor");
-    }
-    
-    // Set example feedback
-    console.log("Setting example feedback");
+    console.log("End Session clicked - Starting calculation...");
+    audioRecorder.stop();
+    setIsCalculatingScore(true); 
+  };
+
+  useEffect(() => {
+    let processingTimeoutId: NodeJS.Timeout;
+    if (isCalculatingScore) { 
+      console.log("Starting simulated score calculation...");
+      processingTimeoutId = setTimeout(() => {
+        console.log("Simulated calculation complete. Finalizing session...");
+        
+        if (!topic) {
+          console.log("Setting default topic for results page");
+          setTopic("Example Topic");
+        }
+        if (!selectedPersona) {
+          console.log("Setting default persona for results page");
+          setSelectedPersona("professor");
+        }
+        console.log("Setting placeholder feedback/score for results page");
     setFeedback([
       "You explained the concept clearly and used good examples.",
       "Try using simpler language for some of the technical terms.",
       "Your explanation was well-structured and easy to follow."
     ]);
-    
-    // Set example score
-    console.log("Setting example score");
-    setScore(85);
-    
-    // Log before disconnect
-    console.log("About to disconnect");
-    disconnect();
-    console.log("Disconnected successfully");
-    
-    // Log before navigation
-    console.log("About to navigate to /results");
-    navigate("/results");
-    console.log("Navigation called");
-  };
+        setScore(88);
+
+        console.log("Disconnecting...");
+        disconnect();
+        console.log("Disconnected.");
+        
+        console.log("Navigating to /results");
+        navigate("/results");
+
+        setIsCalculatingScore(false); 
+
+      }, 2500);
+    }
+
+    return () => {
+        clearTimeout(processingTimeoutId);
+    };
+  }, [isCalculatingScore, disconnect, navigate, setFeedback, setScore, setTopic, setSelectedPersona, topic, selectedPersona]);
 
   return (
     <section className="control-tray flex items-center justify-center border-scholarly-gold border-2 rounded-lg bg-scholarly-navy p-4 min-h-[80px]">
       <canvas style={{ display: "none" }} ref={renderCanvasRef} />
 
-      {!connected ? (
+      {!connected && !isCalculatingScore ? (
         // --- State: Not Connected ---
         <div className="flex justify-center z-10">
           <button
             ref={connectButtonRef}
             className="action-button connect-toggle flex items-center gap-2 bg-scholarly-navy/70 hover:bg-scholarly-navy/90 text-scholarly-gold border-2 border-scholarly-gold/30 hover:border-scholarly-gold/50 px-4 py-2 rounded-lg"
             onClick={connect}
+            disabled={isCalculatingScore}
           >
             <span className="material-symbols-outlined filled">play_arrow</span>
             <span>Start Session</span>
           </button>
         </div>
+      ) : isCalculatingScore ? (
+        // --- State: Calculating Score --- 
+        <div className="flex flex-col items-center justify-center w-full z-10 gap-2 text-scholarly-gold animate-pulse">
+             <span className="material-symbols-outlined text-2xl">calculate</span>
+             <p className="text-sm font-medium">Calculating Score...</p>
+        </div>
       ) : (
         // --- State: Connected ---
         <div className="flex items-center justify-center w-full z-10 gap-4">
-          {/* Left side: Mic button */}
+          {/* Mic button */}
           <button
             className={cn("action-button mic-button rounded-full w-12 h-12 flex items-center justify-center p-0 border-2 border-scholarly-gold/30 hover:border-scholarly-gold/50",
-                         !muted ? "bg-scholarly-navy/70 hover:bg-scholarly-navy/90" : "bg-red-500/80 hover:bg-red-600/80"
+                         !muted ? "bg-scholarly-navy/70 hover:bg-scholarly-navy/90" : "bg-red-500/80 hover:bg-red-600/80",
+                         isCalculatingScore && "opacity-50 cursor-not-allowed"
                         )}
-            onClick={() => setMuted(!muted)}
+            onClick={() => !isCalculatingScore && setMuted(!muted)}
+            disabled={isCalculatingScore}
           >
             {!muted ? (
               <span className="material-symbols-outlined filled text-scholarly-gold">mic</span>
@@ -255,42 +282,44 @@ function ControlTray({
             )}
           </button>
 
-          {/* Center: Audio Visualizer placeholder */}
+          {/* Center: Audio Visualizer */}
           <div className="flex flex-col items-center">
-            <div className="flex gap-1 mb-1 h-6 items-end">
-              {Array.from({ length: 7 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="w-1 bg-scholarly-gold rounded-full transition-all duration-100"
-                  style={{
-                    height: `${Math.max(2, Math.min(4 + (i + 1) * 2, 4 + (i + 1) * 2 * inVolume * 5))}px`,
-                    opacity: inVolume > (i * 0.1) ? 1 : 0.3,
-                  }}
-                ></div>
-              ))}
-            </div>
-            <div className="flex items-center gap-1">
-              {/* Use material icon for volume */}
-              <span className="material-symbols-outlined text-scholarly-gold/80 text-sm">volume_up</span>
-              <p className="text-xs font-medium text-scholarly-gold/80">LIVE</p>
-            </div>
+              <div className="flex gap-1 mb-1 h-6 items-end">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-1 bg-scholarly-gold rounded-full transition-all duration-100"
+                    style={{
+                      height: `${Math.max(2, Math.min(4 + (i + 1) * 2, 4 + (i + 1) * 2 * inVolume * 5))}px`,
+                      opacity: inVolume > (i * 0.1) ? 1 : 0.3,
+                    }}
+                  ></div>
+                ))}
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="material-symbols-outlined text-scholarly-gold/80 text-sm">volume_up</span>
+                <p className="text-xs font-medium text-scholarly-gold/80">LIVE</p>
+              </div>
           </div>
 
-          {/* Right side: End Session button */}
+          {/* End Session button */}
           <button
-            className="action-button end-session-button flex items-center gap-2 bg-scholarly-navy/70 hover:bg-scholarly-navy/90 text-scholarly-gold border-2 border-scholarly-gold/30 hover:border-scholarly-gold/50 px-4 py-2 rounded-lg"
+            className={cn(
+                "action-button end-session-button flex items-center gap-2 bg-scholarly-navy/70 hover:bg-scholarly-navy/90 text-scholarly-gold border-2 border-scholarly-gold/30 hover:border-scholarly-gold/50 px-4 py-2 rounded-lg",
+                isCalculatingScore && "opacity-50 cursor-not-allowed"
+            )}
             onClick={handleEndSession}
+            disabled={isCalculatingScore}
           >
-            <span className="material-symbols-outlined filled">stop</span>
-            <span>End Session</span>
+             <span className="material-symbols-outlined filled">stop</span>
+             <span>End Session</span>
           </button>
-          {children} {/* Keep children, though placement might need review */}
+          {children} 
         </div>
       )}
 
-      {/* Removed the old connection-container div */}
-      {/* Settings dialog remains outside the main conditional rendering */}
-      {enableEditingSettings ? <SettingsDialog /> : ""}
+      {/* Settings dialog */}
+      {enableEditingSettings && !isCalculatingScore && <SettingsDialog />}
     </section>
   );
 }
