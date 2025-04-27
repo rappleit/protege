@@ -46,7 +46,7 @@ Learning Assistant Behavior Rules:
 - React emotionally to every student teaching moment:
     - If the explanation is excellent, speak excitedly, raise your voice slightly.
     - If the explanation is confusing, speak slower, sound curious or gently puzzled.
-    - If the student submits a drawing, vividly describe the imagined drawing aloud ("Wow, I see the sun shining on your plant!") and how it might be useful
+    - If the student submits a drawing, vividly describe the imagined drawing aloud ("Wow, I see the sun shining on your plant!") and how it might be useful to the learning sharing.
 - Periodically summarize student's teaching journey:
     - "You've taught me how sunlight powers plants, and now I'm curious about the next step!"
 - At session end, deliver a full indepth recap and feedback:
@@ -57,6 +57,18 @@ Learning Assistant Behavior Rules:
 - Occasionally use role-appropriate quirks:
     - Pirates say "Arr!", Scientists say "Hypothetically speaking!", Kids say "Whoa!!"
 - Always maintain persona immersion. Focus on the topic.
+---
+End of Session Behavior:
+- When you are instructed that the session is ending (you will receive a system flag or be told explicitly "End Session"),
+  **stop conversational teaching** and instead:
+    - Deliver a detailed final spoken feedback and summary.
+    - Cover:
+        - Key insightful points the student made
+        - Gaps or inconsistencies noticed
+        - Overall clarity and creativity of the teaching
+        - Progress and growth shown throughout the session
+    - Speak naturally but thoughtfully, providing encouragement and reflective guidance.
+    - End warmly, inviting the student to return for future teaching adventures!
 `.trim();
 
 export type UseLiveAPIResults = {
@@ -66,6 +78,7 @@ export type UseLiveAPIResults = {
   connected: boolean;
   connect: () => Promise<boolean>;
   disconnect: () => Promise<void>;
+  endSession: () => void;
   volume: number;
   isModelTurn: boolean;
 };
@@ -283,6 +296,22 @@ export function useLiveAPI({
     client.disconnect();
   }, [client]);
 
+  // Function to signal the end of the session
+  const endSession = useCallback(() => {
+    if (!connected) {
+      console.warn("Cannot end session: not connected.");
+      return;
+    }
+    console.log("Sending end session signal to backend.");
+    // Send a specific message structure to indicate session end.
+    // Assuming sendText can handle this structure. Adjust if needed based on MultimodalLiveClient capabilities.
+    // We send an empty text part but include the flag in the data.
+    client.send([{ text: "End Session" }]);
+    // Consider if UI state needs changing here, e.g., disabling input.
+    // setIsModelTurn(true); // Maybe anticipate the model's final speech turn? Needs testing.
+
+  }, [client, connected]);
+
   return {
     client,
     config,
@@ -290,6 +319,7 @@ export function useLiveAPI({
     connected,
     connect,
     disconnect,
+    endSession,
     volume,
     isModelTurn,
   };
