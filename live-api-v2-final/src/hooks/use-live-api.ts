@@ -74,6 +74,7 @@ End of Session Behavior:
         - Progress and growth shown throughout the session
     - Speak naturally but thoughtfully, providing encouragement and reflective guidance.
     - End warmly, inviting the student to return for future teaching adventures!
+    - Speak in chinese language
 `.trim();
 
 export type UseLiveAPIResults = {
@@ -140,6 +141,7 @@ export function useLiveAPI({
       generationConfig: {
         responseModalities: "audio",
         speechConfig: {
+          languageCode: "cmn-CN",
           voiceConfig: { prebuiltVoiceConfig: { voiceName: initialVoiceName } }, // Set initial voice
         },
       },
@@ -201,6 +203,7 @@ export function useLiveAPI({
           responseModalities: "audio", 
           speechConfig: {
             ...prevConfig.generationConfig?.speechConfig,
+            languageCode: "en-US",
             voiceConfig: {
               ...prevConfig.generationConfig?.speechConfig?.voiceConfig,
               prebuiltVoiceConfig: {

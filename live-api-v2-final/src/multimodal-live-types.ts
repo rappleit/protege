@@ -44,6 +44,7 @@ export type LiveConfig = {
 export type LiveGenerationConfig = GenerationConfig & {
   responseModalities: "text" | "audio" | "image";
   speechConfig?: {
+    languageCode?: string;
     voiceConfig?: {
       prebuiltVoiceConfig?: {
         voiceName: "Puck" | "Charon" | "Kore" | "Fenrir" | "Aoede" | string;
