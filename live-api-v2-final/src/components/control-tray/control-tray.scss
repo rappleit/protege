@@ -3,19 +3,16 @@
   align-items: center;
   justify-content: center;
   background: var(--scholarly-charcoal, var(--Neutral-20));
-  color: var(--scholarly-cream, var(--Neutral-60));
+  /* color: var(--scholarly-cream, var(--Neutral-60)); */ /* Let Tailwind control text color */
   font-size: 1.25rem;
   line-height: 1.75rem;
-  text-transform: lowercase;
+  /* text-transform: lowercase; */ /* Temporarily remove */
   cursor: pointer;
   animation: opacity-pulse 3s ease-in infinite;
   transition: all 0.2s ease-in-out;
-  width: 48px;
-  height: 48px;
   border-radius: 18px;
   border: 1px solid rgba(0, 0, 0, 0);
   user-select: none;
-  cursor: pointer;
 
   &:focus {
     border: 2px solid var(--scholarly-gold, var(--Neutral-20));
@@ -98,8 +95,9 @@
   }
 
   &:not(.connected) {
-    background-color: var(--scholarly-gold, var(--Blue-500));
-    color: var(--scholarly-navy, var(--Neutral-5));
+    /* Remove conflicting styles - let Tailwind manage these */
+    /* background-color: var(--scholarly-gold, var(--Blue-500)); */
+    /* color: var(--scholarly-navy, var(--Neutral-5)); */
   }
 }
 

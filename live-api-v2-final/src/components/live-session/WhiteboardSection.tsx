@@ -355,11 +355,6 @@ const WhiteboardSection = forwardRef<
               (Streaming)
             </span>
           )}
-          {!connected && (
-            <span className="text-red-500 text-xs ml-2">
-              (Not connected to API)
-            </span>
-          )}
         </h3>
         <div className="flex gap-2">
           <Button

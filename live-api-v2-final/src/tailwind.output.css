@@ -1062,6 +1062,10 @@ body{
   height: 5rem;
 }
 
+.h-24{
+  height: 6rem;
+}
+
 .h-3{
   height: 0.75rem;
 }
@@ -1661,6 +1665,11 @@ body{
   border-color: hsl(var(--destructive) / 0.5);
 }
 
+.border-gray-600{
+  --tw-border-opacity: 1;
+  border-color: rgb(75 85 99 / var(--tw-border-opacity, 1));
+}
+
 .border-input{
   border-color: hsl(var(--input));
 }
@@ -1737,6 +1746,11 @@ body{
 .bg-gray-100{
   --tw-bg-opacity: 1;
   background-color: rgb(243 244 246 / var(--tw-bg-opacity, 1));
+}
+
+.bg-gray-700{
+  --tw-bg-opacity: 1;
+  background-color: rgb(55 65 81 / var(--tw-bg-opacity, 1));
 }
 
 .bg-gray-800{
@@ -2170,6 +2184,11 @@ body{
   color: rgb(245 158 11 / 0.8);
 }
 
+.text-black{
+  --tw-text-opacity: 1;
+  color: rgb(0 0 0 / var(--tw-text-opacity, 1));
+}
+
 .text-blue-500{
   --tw-text-opacity: 1;
   color: rgb(59 130 246 / var(--tw-text-opacity, 1));
@@ -2439,6 +2458,10 @@ body{
   transition-duration: 150ms;
 }
 
+.duration-100{
+  transition-duration: 100ms;
+}
+
 .duration-1000{
   transition-duration: 1000ms;
 }
@@ -2491,6 +2514,10 @@ body{
   --tw-enter-scale: .95;
 }
 
+.duration-100{
+  animation-duration: 100ms;
+}
+
 .duration-1000{
   animation-duration: 1000ms;
 }
@@ -2526,6 +2553,11 @@ body{
 
 .file\:font-medium::file-selector-button{
   font-weight: 500;
+}
+
+.placeholder\:text-gray-500::placeholder{
+  --tw-text-opacity: 1;
+  color: rgb(107 114 128 / var(--tw-text-opacity, 1));
 }
 
 .placeholder\:text-muted-foreground::placeholder{
@@ -2587,6 +2619,10 @@ body{
   border-bottom-right-radius: calc(var(--radius) - 2px);
 }
 
+.hover\:border-scholarly-gold\/50:hover{
+  border-color: rgb(212 175 55 / 0.5);
+}
+
 .hover\:bg-accent:hover{
   background-color: hsl(var(--accent));
 }
@@ -2597,6 +2633,11 @@ body{
 
 .hover\:bg-destructive\/90:hover{
   background-color: hsl(var(--destructive) / 0.9);
+}
+
+.hover\:bg-gray-600:hover{
+  --tw-bg-opacity: 1;
+  background-color: rgb(75 85 99 / var(--tw-bg-opacity, 1));
 }
 
 .hover\:bg-muted:hover{
@@ -2686,8 +2727,18 @@ body{
   background-color: hsl(var(--accent));
 }
 
+.focus\:bg-gray-600:focus{
+  --tw-bg-opacity: 1;
+  background-color: rgb(75 85 99 / var(--tw-bg-opacity, 1));
+}
+
 .focus\:text-accent-foreground:focus{
   color: hsl(var(--accent-foreground));
+}
+
+.focus\:text-white:focus{
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
 
 .focus\:opacity-100:focus{
@@ -3422,6 +3473,16 @@ body{
   border-color: hsl(var(--destructive));
 }
 
+.dark\:text-black:is(.dark *){
+  --tw-text-opacity: 1;
+  color: rgb(0 0 0 / var(--tw-text-opacity, 1));
+}
+
+.dark\:focus\:text-white:focus:is(.dark *){
+  --tw-text-opacity: 1;
+  color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+
 @media (min-width: 640px){
   .sm\:bottom-0{
     bottom: 0px;
@@ -3501,6 +3562,10 @@ body{
 
   .md\:flex{
     display: flex;
+  }
+
+  .md\:w-1\/2{
+    width: 50%;
   }
 
   .md\:w-1\/4{

@@ -78,6 +78,12 @@ function ControlTray({
   const { client, connected, connect, disconnect, volume } =
     useLiveAPIContext();
 
+  // Ref to track the current connection status reliably
+  const isConnectedRef = useRef(connected);
+  useEffect(() => {
+    isConnectedRef.current = connected;
+  }, [connected]);
+
   useEffect(() => {
     if (!connected && connectButtonRef.current) {
       connectButtonRef.current.focus();
@@ -92,12 +98,28 @@ function ControlTray({
 
   useEffect(() => {
     const onData = (base64: string) => {
-      client.sendRealtimeInput([
-        {
-          mimeType: "audio/pcm;rate=16000",
-          data: base64,
-        },
-      ]);
+      // Check the CURRENT connection status via the ref
+      if (!isConnectedRef.current) {
+        return;
+      }
+      // Add try...catch to handle potential race condition on disconnect
+      try {
+        client.sendRealtimeInput([
+          {
+            mimeType: "audio/pcm;rate=16000",
+            data: base64,
+          },
+        ]);
+      } catch (error) {
+        // Check if the error is the specific WebSocket error we expect
+        if ((error as Error)?.message?.includes('WebSocket is not connected')) {
+          // console.warn("Attempted to send audio data after WebSocket closed. Ignored.");
+          // Swallow the error specifically for this case during disconnection
+        } else {
+          // Log or re-throw other unexpected errors
+          console.error("Error sending audio data:", error);
+        }
+      }
     };
     if (connected && !muted && audioRecorder) {
       audioRecorder.on("data", onData).on("volume", setInVolume).start();
@@ -160,61 +182,73 @@ function ControlTray({
   };
 
   return (
-    <section className="control-tray border-scholarly-gold border-2 rounded-lg bg-scholarly-navy">
+    <section className="control-tray flex items-center justify-center border-scholarly-gold border-2 rounded-lg bg-scholarly-navy p-4 min-h-[80px]">
       <canvas style={{ display: "none" }} ref={renderCanvasRef} />
-      <nav className={cn("actions-nav", { disabled: !connected })}>
-        <button
-          className={cn("action-button mic-button")}
-          onClick={() => setMuted(!muted)}
-        >
-          {!muted ? (
-            <span className="material-symbols-outlined filled text-scholarly-gold">mic</span>
-          ) : (
-            <span className="material-symbols-outlined filled text-red-500">mic_off</span>
-          )}
-        </button>
 
-        <div className="action-button no-action outlined text-scholarly-gold">
-          <div className="text-scholarly-gold">
-            <AudioPulse volume={volume} active={connected} hover={false} />
-          </div>
-        </div>
-
-        {supportsVideo && (
-          <>
-            <MediaStreamButton
-              isStreaming={screenCapture.isStreaming}
-              start={changeStreams(screenCapture)}
-              stop={changeStreams()}
-              onIcon="cancel_presentation"
-              offIcon="present_to_all"
-            />
-            <MediaStreamButton
-              isStreaming={webcam.isStreaming}
-              start={changeStreams(webcam)}
-              stop={changeStreams()}
-              onIcon="videocam_off"
-              offIcon="videocam"
-            />
-          </>
-        )}
-        {children}
-      </nav>
-
-      <div className={cn("connection-container", { connected })}>
-        <div className="connection-button-container ">
+      {!connected ? (
+        // --- State: Not Connected ---
+        <div className="flex justify-center z-10">
           <button
             ref={connectButtonRef}
-            className={cn("action-button connect-toggle ", { connected })}
-            onClick={connected ? disconnect : connect}
+            className="action-button connect-toggle flex items-center gap-2 bg-scholarly-navy/70 hover:bg-scholarly-navy/90 text-scholarly-gold border-2 border-scholarly-gold/30 hover:border-scholarly-gold/50 px-4 py-2 rounded-lg"
+            onClick={connect}
           >
-            <span className="material-symbols-outlined filled text-scholarly-gold">
-              {connected ? "pause" : "play_arrow"}
-            </span>
+            <span className="material-symbols-outlined filled">play_arrow</span>
+            <span>Start Session</span>
           </button>
         </div>
-        <span className="text-indicator text-scholarly-gold">Streaming</span>
-      </div>
+      ) : (
+        // --- State: Connected ---
+        <div className="flex items-center justify-center w-full z-10 gap-4">
+          {/* Left side: Mic button */}
+          <button
+            className={cn("action-button mic-button rounded-full w-12 h-12 flex items-center justify-center p-0 border-2 border-scholarly-gold/30 hover:border-scholarly-gold/50",
+                         !muted ? "bg-scholarly-navy/70 hover:bg-scholarly-navy/90" : "bg-red-500/80 hover:bg-red-600/80"
+                        )}
+            onClick={() => setMuted(!muted)}
+          >
+            {!muted ? (
+              <span className="material-symbols-outlined filled text-scholarly-gold">mic</span>
+            ) : (
+              <span className="material-symbols-outlined filled text-white">mic_off</span>
+            )}
+          </button>
+
+          {/* Center: Audio Visualizer placeholder */}
+          <div className="flex flex-col items-center">
+            <div className="flex gap-1 mb-1 h-6 items-end">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-scholarly-gold rounded-full transition-all duration-100"
+                  style={{
+                    height: `${Math.max(2, Math.min(4 + (i + 1) * 2, 4 + (i + 1) * 2 * inVolume * 5))}px`,
+                    opacity: inVolume > (i * 0.1) ? 1 : 0.3,
+                  }}
+                ></div>
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              {/* Use material icon for volume */}
+              <span className="material-symbols-outlined text-scholarly-gold/80 text-sm">volume_up</span>
+              <p className="text-xs font-medium text-scholarly-gold/80">LIVE</p>
+            </div>
+          </div>
+
+          {/* Right side: End Session button */}
+          <button
+            className="action-button end-session-button flex items-center gap-2 bg-scholarly-navy/70 hover:bg-scholarly-navy/90 text-scholarly-gold border-2 border-scholarly-gold/30 hover:border-scholarly-gold/50 px-4 py-2 rounded-lg"
+            onClick={disconnect}
+          >
+            <span className="material-symbols-outlined filled">stop</span>
+            <span>End Session</span>
+          </button>
+          {children} {/* Keep children, though placement might need review */}
+        </div>
+      )}
+
+      {/* Removed the old connection-container div */}
+      {/* Settings dialog remains outside the main conditional rendering */}
       {enableEditingSettings ? <SettingsDialog /> : ""}
     </section>
   );
