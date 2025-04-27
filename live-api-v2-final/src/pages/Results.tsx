@@ -34,7 +34,7 @@ const Results = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-scholarly-slate">
+    <div className="min-h-screen flex flex-col bg-scholarly-charcoal  bg-gradient-to-b from-scholarly-charcoal to-scholarly-navy/90">
       <Header showTopic />
 
       <main className="flex-1 flex flex-col items-center p-6">
@@ -45,20 +45,18 @@ const Results = () => {
           className="w-full max-w-3xl"
         >
           <div className="text-center mb-12">
-            <h1 className="text-3xl font-bold mb-3 font-medieval">
-              Your Results
-            </h1>
-            <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold mb-3 font-outfit text-white">Your Results</h1>
+
+          <p className="text-muted-foreground text-scholarly-parchment">
               Here's how well you explained "{topic}" to {personaDetails.name}.
             </p>
           </div>
 
-          <div className="bg-card shadow-md rounded-xl p-8 mb-8">
+          <div className="bg-card shadow-md rounded-xl p-8 mb-8 bg-scholarly-navy text-scholarly-cream">
             <div className="flex flex-col md:flex-row gap-6 md:gap-12 items-center mb-8">
               <div className="text-center">
-                <div
-                  className={`w-20 h-20 rounded-full flex items-center justify-center text-white ${personaDetails.color} mx-auto`}
-                >
+              <div className={`w-20 h-20 rounded-full flex items-center justify-center text-white ${personaDetails.color} mx-auto`}>
+
                   <div className="text-2xl font-bold text-scholarly-gold">
                     {personaDetails.name.charAt(0)}
                   </div>
@@ -107,7 +105,7 @@ const Results = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button onClick={handleTryAgain} size="lg">
+            <Button onClick={handleTryAgain} variant="outline" size="lg">
               Try Again (Same Topic)
             </Button>
             <Button onClick={handleNewTopic} gradient size="lg">
