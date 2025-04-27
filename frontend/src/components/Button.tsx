@@ -28,7 +28,6 @@ const Button: React.FC<ButtonProps> = ({
       className={cn(
         'font-medium rounded-md transition-all',
         sizeClasses[size],
-        gradient && 'bg-gradient-to-r from-scholarly-burgundy to-scholarly-gold hover:opacity-90',
         fullWidth && 'w-full',
         className
       )}

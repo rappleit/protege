@@ -58,7 +58,7 @@ const Index = () => {
                 {error && <p className="text-sm text-scholarly-burgundy">{error}</p>}
               </div>
               
-              <Button type="submit" gradient fullWidth className="bg-gradient-to-r from-scholarly-gold to-scholarly-russet hover:from-scholarly-russet hover:to-scholarly-gold text-scholarly-navy font-medium">
+              <Button type="submit" gradient fullWidth className=" text-scholarly-navy font-medium">
                 Continue
               </Button>
             </form>

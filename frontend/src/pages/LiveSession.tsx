@@ -104,7 +104,7 @@ const LiveSession = () => {
   };
   
   return (
-    <div className="min-h-screen flex flex-col bg-scholarly-charcoal ">
+    <div className="min-h-screen flex flex-col bg-scholarly-charcoal">
       <Header showTopic />
       
       <main className="flex-1 flex flex-col p-4 md:p-6 relative">
