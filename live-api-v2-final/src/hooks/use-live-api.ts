@@ -140,6 +140,7 @@ export function useLiveAPI({
       },
       generationConfig: {
         responseModalities: "audio",
+        tools:[{googleSearch: {}}],
         speechConfig: {
           languageCode: "en-US",
           voiceConfig: { prebuiltVoiceConfig: { voiceName: initialVoiceName } }, // Set initial voice
