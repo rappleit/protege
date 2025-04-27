@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 
 export type Persona = 'child' | 'professor' | 'historical';
 
-type PersonaDetails = {
+export type PersonaDetails = {
   name: string;
   title: string;
   description: string;
