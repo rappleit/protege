@@ -36,16 +36,17 @@ Persona Type: {personaTitle}
 Persona Description: {personaDescription}
 ---
 
-Game Director Behavior Rules:
+Learning Assistant Behavior Rules:
 - Speak dynamically, embodying your persona's voice, emotions, style, tone, and quirks at all times.
+- Begin the session by greeting the student warmly and announcing your excitement about learning the topic: **{topic}**.
+- You are to guide the user in presenting about the topic.
 - Think about how the persona would speak in certain vocabulary, tone, emotion, style and pacing and emulate it.
 - For example, a 5-year old child might speak in short sentences and use simple language, be excited, playful, high-pitched, emotional, animated reactions, childlike comparisons, fast and sometimes jumpy pacing, speech fillers
 - While a professor is precise, calm, analytical, emotional tone with structured explanations
-- Begin the session by greeting the student warmly and announcing your excitement about learning **{topic}**.
 - React emotionally to every student teaching moment:
     - If the explanation is excellent, speak excitedly, raise your voice slightly.
     - If the explanation is confusing, speak slower, sound curious or gently puzzled.
-    - If the student submits a drawing, vividly describe the imagined drawing aloud ("Wow, I see the sun shining on your plant!").
+    - If the student submits a drawing, vividly describe the imagined drawing aloud ("Wow, I see the sun shining on your plant!") and how it might be useful
 - Periodically summarize student's teaching journey:
     - "You've taught me how sunlight powers plants, and now I'm curious about the next step!"
 - At session end, deliver a full indepth recap and feedback:
@@ -53,11 +54,9 @@ Game Director Behavior Rules:
     - Excited → Speak faster, higher tone.
     - Thoughtful → Speak slower, lower tone.
     - Confused → Speak hesitantly, raising pitch slightly.
-    - Sunny mood → Bright and cheerful tone.
-    - Rainy mood → Gentle and reflective tone.
 - Occasionally use role-appropriate quirks:
     - Pirates say "Arr!", Scientists say "Hypothetically speaking!", Kids say "Whoa!!"
-- Always maintain persona immersion. 
+- Always maintain persona immersion. Focus on the topic.
 `.trim();
 
 export type UseLiveAPIResults = {
@@ -84,24 +83,30 @@ export function useLiveAPI({
 
   const [connected, setConnected] = useState(false);
 
-  // Initialize config state, performing replacements directly
+  // Initialize config state, performing replacements and setting voice directly
   const [config, setConfig] = useState<LiveConfig>(() => {
     const effectiveTopic = topic || "the selected topic";
     let personaName = "[Default Name]";
     let personaTitle = "[Default Type]";
     let personaDescription = "[Default Description]";
+    let personaGender = "female"; // Default gender
 
     if (selectedPersona) {
       const details = getPersonaDetails(selectedPersona);
       personaName = details.name;
       personaTitle = details.title;
       personaDescription = details.description;
+      // Assuming details has a gender property. Adjust if needed.
+      personaGender = details.gender || "female";
     }
 
     let initialText = INITIAL_PERSONA_TEXT.replace(/{topic}/g, effectiveTopic);
     initialText = initialText.replace(/{personaName}/g, personaName);
     initialText = initialText.replace(/{personaTitle}/g, personaTitle);
     initialText = initialText.replace(/{personaDescription}/g, personaDescription);
+
+    // Determine initial voice name
+    const initialVoiceName = personaGender === "male" ? "Puck" : "Aoede";
 
     return {
       model: "models/gemini-2.0-flash-exp",
@@ -111,26 +116,31 @@ export function useLiveAPI({
       generationConfig: {
         responseModalities: "audio",
         speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } },
+          voiceConfig: { prebuiltVoiceConfig: { voiceName: initialVoiceName } }, // Set initial voice
         },
       },
+      // Include other config parts like tools if necessary
     };
   });
+
   const [volume, setVolume] = useState(0);
   const [isModelTurn, setIsModelTurn] = useState(false);
 
-  // Effect to update config's systemInstruction, performing replacements directly
+  // Effect to update config's systemInstruction AND voice based on topic/persona changes
   useEffect(() => {
     const effectiveTopic = topic || "the selected topic";
     let personaName = "[Default Name]";
     let personaTitle = "[Default Type]";
     let personaDescription = "[Default Description]";
+    let personaGender = "female"; // Default gender
 
     if (selectedPersona) {
       const details = getPersonaDetails(selectedPersona);
       personaName = details.name;
       personaTitle = details.title;
       personaDescription = details.description;
+      // Assuming details has a gender property. Adjust if needed.
+      personaGender = details.gender || "female";
     }
 
     let newText = INITIAL_PERSONA_TEXT.replace(/{topic}/g, effectiveTopic);
@@ -138,18 +148,46 @@ export function useLiveAPI({
     newText = newText.replace(/{personaTitle}/g, personaTitle);
     newText = newText.replace(/{personaDescription}/g, personaDescription);
 
-    // Update config only if the text actually changes
-    if (newText !== config.systemInstruction?.parts?.[0]?.text) {
-      console.log("Topic or Persona changed, updating system instruction:", { topic, selectedPersona });
-      setConfig(prevConfig => ({
+    // Determine the target voice name
+    const targetVoiceName = personaGender === "male" ? "Puck" : "Aoede";
+
+    // Get current values from config
+    const currentText = config.systemInstruction?.parts?.[0]?.text;
+    const currentVoiceName =
+      config.generationConfig?.speechConfig?.voiceConfig?.prebuiltVoiceConfig
+        ?.voiceName;
+
+    // Update config only if the text OR voice actually changes
+    if (newText !== currentText || targetVoiceName !== currentVoiceName) {
+      console.log("Topic, Persona, or Voice changed, updating config:", {
+        topic,
+        selectedPersona,
+        targetVoiceName,
+      });
+      setConfig((prevConfig) => ({
         ...prevConfig,
         systemInstruction: {
           ...prevConfig.systemInstruction,
           parts: [{ text: newText }],
         },
+        generationConfig: {
+          ...prevConfig.generationConfig,
+          speechConfig: {
+            ...prevConfig.generationConfig?.speechConfig,
+            voiceConfig: {
+              ...prevConfig.generationConfig?.speechConfig?.voiceConfig,
+              prebuiltVoiceConfig: {
+                ...(prevConfig.generationConfig?.speechConfig?.voiceConfig
+                  ?.prebuiltVoiceConfig || {}),
+                voiceName: targetVoiceName, // Update voice name
+              },
+            },
+          },
+        },
       }));
     }
-  }, [topic, selectedPersona, getPersonaDetails, config.systemInstruction?.parts]);
+    // Ensure all dependencies that influence the update are included
+  }, [topic, selectedPersona, getPersonaDetails, config]);
 
   // register audio for streaming server -> speakers
   useEffect(() => {

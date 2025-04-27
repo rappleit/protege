@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 
-export type Persona = 'child' | 'professor' | 'historical';
+export type Persona = 'child' | 'professor' | 'custom';
 
 export type PersonaDetails = {
   name: string;
@@ -8,6 +8,7 @@ export type PersonaDetails = {
   description: string;
   imageUrl: string;
   color: string;
+  gender: string;
 };
 
 type SessionContextType = {
@@ -15,6 +16,14 @@ type SessionContextType = {
   setTopic: (topic: string) => void;
   selectedPersona: Persona | null;
   setSelectedPersona: (persona: Persona) => void;
+  customPersonaName: string;
+  setCustomPersonaName: (name: string) => void;
+  customPersonaTitle: string;
+  setCustomPersonaTitle: (title: string) => void;
+  customPersonaDescription: string;
+  setCustomPersonaDescription: (description: string) => void;
+  customPersonaGender: string;
+  setCustomPersonaGender: (gender: string) => void;
   isRecording: boolean;
   setIsRecording: (isRecording: boolean) => void;
   recordingTime: number;
@@ -36,6 +45,7 @@ export const personaData: Record<Persona, PersonaDetails> = {
     description: "Explain to me like I'm 5! I'll ask simple but deep questions that get to the heart of your topic.",
     imageUrl: "/placeholder.svg",
     color: "bg-protege-child",
+    gender: "female",
   },
   professor: {
     name: "Dr. Maxwell",
@@ -43,31 +53,51 @@ export const personaData: Record<Persona, PersonaDetails> = {
     description: "I'll challenge your knowledge with expert questions to ensure you truly understand your subject.",
     imageUrl: "/placeholder.svg",
     color: "bg-protege-professor",
+    gender: "male",
   },
-  historical: {
+  custom: {
     name: "Dynamic Character",
-    title: "Famous Figure",
-    description: "I'll provide a unique perspective on your topic based on my era and experiences.",
+    title: "Historical Figure",
+    description: "I'll provide a unique perspective on your topic based on my era and experiences. Please define my details!",
     imageUrl: "/placeholder.svg",
     color: "bg-protege-historical",
+    gender: "male",
   }
 };
 
 export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [topic, setTopic] = useState<string>('');
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+  const [customPersonaName, setCustomPersonaName] = useState<string>(personaData.custom.name);
+  const [customPersonaTitle, setCustomPersonaTitle] = useState<string>(personaData.custom.title);
+  const [customPersonaDescription, setCustomPersonaDescription] = useState<string>(personaData.custom.description);
+  const [customPersonaGender, setCustomPersonaGender] = useState<string>(personaData.custom.gender);
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [recordingTime, setRecordingTime] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
   const [feedback, setFeedback] = useState<string[]>([]);
 
   const getPersonaDetails = (persona: Persona): PersonaDetails => {
+    if (persona === 'custom') {
+      return {
+        name: customPersonaName || personaData.custom.name,
+        title: customPersonaTitle || personaData.custom.title,
+        description: customPersonaDescription || personaData.custom.description,
+        gender: customPersonaGender || personaData.custom.gender,
+        imageUrl: personaData.custom.imageUrl,
+        color: personaData.custom.color,
+      };
+    }
     return personaData[persona];
   };
 
   const resetSession = () => {
     setTopic('');
     setSelectedPersona(null);
+    setCustomPersonaName(personaData.custom.name);
+    setCustomPersonaTitle(personaData.custom.title);
+    setCustomPersonaDescription(personaData.custom.description);
+    setCustomPersonaGender(personaData.custom.gender);
     setIsRecording(false);
     setRecordingTime(0);
     setScore(0);
@@ -81,6 +111,14 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setTopic,
         selectedPersona, 
         setSelectedPersona,
+        customPersonaName,
+        setCustomPersonaName,
+        customPersonaTitle,
+        setCustomPersonaTitle,
+        customPersonaDescription,
+        setCustomPersonaDescription,
+        customPersonaGender,
+        setCustomPersonaGender,
         isRecording,
         setIsRecording,
         recordingTime,

@@ -1,11 +1,11 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { useSession } from "../contexts/SessionContext";
+import { useSession, Persona } from "../contexts/SessionContext";
 import { Star, Sword, Book } from "lucide-react";
 import { cn } from "../lib/utils";
 
 type PersonaCardProps = {
-  persona: "child" | "professor" | "historical";
+  persona: Persona;
   isSelected: boolean;
   onClick: () => void;
 };
@@ -18,15 +18,16 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
   const { getPersonaDetails } = useSession();
   const personaDetails = getPersonaDetails(persona);
 
-  const getPersonaIcon = (persona: string) => {
+  const getPersonaIcon = (persona: Persona) => {
     switch (persona) {
       case "child":
         return Star;
       case "professor":
         return Book;
-      case "historical":
+      case "custom":
         return Sword;
       default:
+        const exhaustiveCheck: never = persona;
         return Star;
     }
   };
