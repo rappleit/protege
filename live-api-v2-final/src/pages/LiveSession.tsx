@@ -134,7 +134,6 @@ const LiveSession = () => {
 
             <div className="flex flex-col gap-4 w-full md:w-1/4">
               <TranscriptSection messages={userMessages} />
-              <ProgressSection />
             </div>
 
             <div className="w-full md:w-2/4 flex flex-col gap-4">
