@@ -45,9 +45,9 @@ export const personaData: Record<Persona, PersonaDetails> = {
     color: "bg-protege-professor",
   },
   historical: {
-    name: "Marie Curie",
-    title: "Historical Figure",
-    description: "I'll provide a unique historical perspective on your topic based on my era and experiences.",
+    name: "Dynamic Character",
+    title: "Famous Figure",
+    description: "I'll provide a unique perspective on your topic based on my era and experiences.",
     imageUrl: "/placeholder.svg",
     color: "bg-protege-historical",
   }
