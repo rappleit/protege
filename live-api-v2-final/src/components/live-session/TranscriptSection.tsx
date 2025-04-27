@@ -16,7 +16,7 @@ const TranscriptSection: React.FC<TranscriptSectionProps> = ({ messages }) => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4 }}
-      className="w-full bg-card rounded-xl shadow-md p-4 flex flex-col h-3/4 bg-scholarly-navy"
+      className="w-full bg-card rounded-xl shadow-md p-4 flex flex-col h-full bg-scholarly-navy"
     >
       <h3 className="text-lg font-medium mb-3 text-scholarly-gold">
         Transcript
