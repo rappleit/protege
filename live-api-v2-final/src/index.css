@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 42 33% 95%;
+    --foreground: 220 28% 14%;
+    --card: 37 45% 98%;
+    --card-foreground: 220 28% 14%;
+    --popover: 37 45% 98%;
+    --popover-foreground: 220 28% 14%;
+    --primary: 45 76% 52%;
+    --primary-foreground: 220 28% 14%;
+    --secondary: 82 40% 30%;
+    --secondary-foreground: 42 33% 95%;
+    --muted: 220 13% 95%;
+    --muted-foreground: 220 10% 40%;
+    --accent: 0 40% 32%;
+    --accent-foreground: 42 33% 95%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 13% 86%;
+    --input: 220 13% 86%;
+    --ring: 45 76% 52%;
+    --radius: 0.75rem;
+
+    /* RPG Theme Specific Variables (updated for scholarly look) */
+    --rpg-border-glow: 0 0 10px theme('colors.scholarly.gold');
+    --rpg-card-bg: rgba(26, 31, 44, 0.85);
+    --rpg-gradient-primary: linear-gradient(to right, theme('colors.scholarly.burgundy'), theme('colors.scholarly.gold'));
+    --rpg-gradient-secondary: linear-gradient(to bottom, rgba(245, 245, 220, 0.08), rgba(245, 245, 220, 0.03));
+  }
+
+  .dark {
+    --background: 220 28% 14%;
+    --foreground: 42 33% 95%;
+    --card: 220 25% 18%;
+    --card-foreground: 42 33% 95%;
+    --popover: 220 25% 18%;
+    --popover-foreground: 42 33% 95%;
+    --primary: 45 76% 52%;
+    --primary-foreground: 220 28% 14%;
+    --secondary: 82 40% 30%;
+    --secondary-foreground: 42 33% 95%;
+    --muted: 220 25% 25%;
+    --muted-foreground: 42 25% 80%;
+    --accent: 0 40% 32%;
+    --accent-foreground: 42 33% 95%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 42 33% 95%;
+    --border: 220 25% 25%;
+    --input: 220 25% 25%;
+    --ring: 45 76% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Outfit', sans-serif;
+  }
+  
+  .font-medieval {
+    font-family: 'Outfit', sans-serif;
+  }
+}
+
+@layer components {
+  .rpg-card {
+    @apply relative border-2 border-scholarly-gold rounded-lg bg-scholarly-navy/85 backdrop-blur;
+    box-shadow: var(--rpg-border-glow);
+  }
+
+  .rpg-gradient {
+    @apply absolute inset-0 opacity-20;
+    background: var(--rpg-gradient-secondary);
+  }
+
+  .rpg-border {
+    @apply relative;
+  }
+  
+  .rpg-border::after {
+    content: '';
+    @apply absolute -bottom-2 left-0 h-1 w-1/2 rounded-full;
+    background: var(--rpg-gradient-primary);
+  }
+
+  .rpg-icon-container {
+    @apply w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all;
+  }
+
+  .rpg-icon {
+    @apply w-8 h-8 transition-colors;
+  }
+
+  .rpg-title {
+    @apply text-xl font-bold font-outfit;
+  }
+
+  .rpg-subtitle {
+    @apply text-sm text-scholarly-cream/80;
+  }
+
+  .rpg-text {
+    @apply text-sm text-scholarly-parchment/90;
+  }
+  
+  .scholarly-paper {
+    @apply bg-scholarly-parchment text-scholarly-navy border border-scholarly-russet/20 shadow-md;
+  }
+  
+  .scholarly-heading {
+    @apply font-outfit text-scholarly-burgundy;
+  }
+  
+  .scholarly-card {
+    @apply bg-scholarly-cream border border-scholarly-navy/20 shadow-md;
+  }
+
+  .scholarly-text {
+    @apply font-outfit;
+  }
+}
+
+@layer utilities {
+  .whiteboard-container {
+    touch-action: none;
+  }
+  
+  .ink-text {
+    @apply text-scholarly-navy;
+  }
+  
+  .parchment-bg {
+    @apply bg-scholarly-parchment;
+  }
+}
