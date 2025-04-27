@@ -19,7 +19,7 @@ import {
   MultimodalLiveAPIClientConnection,
   MultimodalLiveClient,
 } from "../lib/multimodal-live-client";
-import { LiveConfig, ServerContent, isModelTurn } from "../multimodal-live-types";
+import { LiveConfig, ServerContent } from "../multimodal-live-types";
 import { Part } from '@google/generative-ai';
 import { AudioStreamer } from "../lib/audio-streamer";
 import { audioContext } from "../lib/utils";
@@ -62,6 +62,7 @@ export type UseLiveAPIResults = {
   connect: () => Promise<boolean>;
   disconnect: () => Promise<void>;
   volume: number;
+  isModelTurn: boolean;
 };
 
 export function useLiveAPI({
@@ -92,6 +93,7 @@ export function useLiveAPI({
     },
   });
   const [volume, setVolume] = useState(0);
+  const [isModelTurn, setIsModelTurn] = useState(false);
 
   // register audio for streaming server -> speakers
   useEffect(() => {
@@ -117,25 +119,50 @@ export function useLiveAPI({
     const onClose = () => {
       console.log("LiveAPI Client: Connection closed.");
       setConnected(false);
+      setIsModelTurn(false);
     };
 
-    const stopAudioStreamer = () => audioStreamerRef.current?.stop();
+    const stopAudioStreamer = () => {
+      audioStreamerRef.current?.stop();
+      setIsModelTurn(false);
+    };
 
-    const onAudio = (data: ArrayBuffer) =>
+    const onAudio = (data: ArrayBuffer) => {
       audioStreamerRef.current?.addPCM16(new Uint8Array(data));
+    };
+
+    const onContent = (content: ServerContent) => {
+      console.log("Content received:", content);
+    };
+
+    const onTurnComplete = () => {
+      console.log("Turn complete");
+      setIsModelTurn(false);
+    };
+
+    const onIsModelTurn = () => {
+      console.log("Model turn detected");
+      setIsModelTurn(true);
+    };
 
     client
       .on("open", onOpen)
       .on("close", onClose)
       .on("interrupted", stopAudioStreamer)
-      .on("audio", onAudio);
+      .on("audio", onAudio)
+      .on("content", onContent)
+      .on("turncomplete", onTurnComplete)
+      .on("ismodelturn", onIsModelTurn);
 
     return () => {
       client
         .off("open", onOpen)
         .off("close", onClose)
         .off("interrupted", stopAudioStreamer)
-        .off("audio", onAudio);
+        .off("audio", onAudio)
+        .off("content", onContent)
+        .off("turncomplete", onTurnComplete)
+        .off("ismodelturn", onIsModelTurn);
     };
   }, [client]);
 
@@ -168,5 +195,6 @@ export function useLiveAPI({
     connect,
     disconnect,
     volume,
+    isModelTurn,
   };
 }

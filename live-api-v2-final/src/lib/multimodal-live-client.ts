@@ -50,6 +50,7 @@ interface MultimodalLiveClientEventTypes {
   content: (data: ServerContent) => void;
   interrupted: () => void;
   setupcomplete: () => void;
+  ismodelturn: () => void;
   turncomplete: () => void;
   toolcall: (toolCall: ToolCall) => void;
   toolcallcancellation: (toolcallCancellation: ToolCallCancellation) => void;
@@ -202,6 +203,8 @@ export class MultimodalLiveClient extends EventEmitter<MultimodalLiveClientEvent
       }
 
       if (isModelTurn(serverContent)) {
+        this.log("server.send", "isModelTurn");
+        this.emit("ismodelturn");
         let parts: Part[] = serverContent.modelTurn.parts;
 
         // when its audio that is returned for modelTurn
