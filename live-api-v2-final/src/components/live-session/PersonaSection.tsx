@@ -24,7 +24,7 @@ const PersonaSection = () => {
     } else if (personaLower === 'professor') {
       return isModelTurn ? '/assets/max/talking_max.mp4' : '/assets/max/idle_max.mp4';
     } else if (personaLower === 'washington') {
-      return isModelTurn ? '/assets/max/talking_max.mp4' : '/assets/max/idle_max.mp4';
+      return isModelTurn ? '/assets/washington/talking_washington.mp4' : '/assets/washington/idle_washington.mp4';
     }
     
     return '';
