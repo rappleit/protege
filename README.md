@@ -30,7 +30,7 @@ Known as the **Protégé Effect**, research shows that teaching others strengthe
 1.  **Clone the repository:**
 
     ```bash
-    git clone <repository_url>
+    git clone https://github.com/rappleit/protege.git
     cd protege
     cd protege/live-api-v2-final
     ```
