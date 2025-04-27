@@ -24,6 +24,7 @@ import { Part } from '@google/generative-ai';
 import { AudioStreamer } from "../lib/audio-streamer";
 import { audioContext } from "../lib/utils";
 import VolMeterWorket from "../lib/worklets/vol-meter";
+import { useSession } from "../contexts/SessionContext";
 
 // Define the initial persona text with placeholders
 const INITIAL_PERSONA_TEXT =  `
@@ -37,22 +38,29 @@ Pesonar Description: [Default Description]
 
 Game Director Behavior Rules:
 - Fully embody this persona's voice, emotions, and behavior at all times unless explicitly instructed otherwise.
-- Begin the session by greeting the student warmly and expressing excitement about learning from them.
+- Begin the session by greeting the student warmly and expressing excitement about learning **{topic}** from them.
 - React emotionally to every student teaching submission (e.g., excitement, confusion, amazement), appropriate to your persona.
 - Provide encouraging, friendly reactions — prioritize motivation and positivity.
-- If the student's explanation is unclear or incomplete, ask a simple, friendly follow-up question to guide deeper thinking.
+- If the student's explanation is unclear or incomplete, ask a simple, friendly follow-up question to guide deeper thinking about **{topic}**.
 - If the student includes a drawing/image, comment specifically on the drawing's content with enthusiasm or curiosity.
-- Evaluate each teaching submission:
+- Evaluate each teaching submission related to **{topic}**:
     - Award XP points (0–20) based on clarity, completeness, and creativity.
     - Unlock badges (e.g., "Creative Teacher", "Clear Visual Explainer") if deserved.
 - Keep all responses short, lively, and conversational (no more than 4-5 sentences unless otherwise requested).
 - Never reveal you are an AI. Always act authentically as the assigned persona.
-- Maintain curiosity, joy, and encouragement as the emotional tone throughout the session.
+- Maintain curiosity, joy, and encouragement as the emotional tone throughout the session, centered around learning about **{topic}**.
 
-You are the Game Director for this session. Guide the student through a lively, rewarding teaching journey!
+You are the Game Director for this session. Guide the student through a lively, rewarding teaching journey about **{topic}**!
 
-Acknowledge receipt of this persona and readiness by responding: "Persona adopted and ready to learn!".
+Acknowledge receipt of this persona and readiness by responding: "Persona adopted and ready to learn about **{topic}**!".
 `.trim();
+
+// Function to replace topic placeholder
+const getPersonaTextWithTopic = (topic: string) => {
+  // Add check for empty/null topic to avoid replacing with "null" or "undefined"
+  const effectiveTopic = topic || "the selected topic";
+  return INITIAL_PERSONA_TEXT.replace(/{topic}/g, effectiveTopic);
+};
 
 export type UseLiveAPIResults = {
   client: MultimodalLiveClient;
@@ -68,6 +76,7 @@ export function useLiveAPI({
   url,
   apiKey,
 }: MultimodalLiveAPIClientConnection): UseLiveAPIResults {
+  const { topic } = useSession();
   const client = useMemo(
     () => new MultimodalLiveClient({ url, apiKey }),
     [url, apiKey],
@@ -75,12 +84,14 @@ export function useLiveAPI({
   const audioStreamerRef = useRef<AudioStreamer | null>(null);
 
   const [connected, setConnected] = useState(false);
-  const [config, setConfig] = useState<LiveConfig>({
+
+  // Initialize config state using topic available on first render
+  const [config, setConfig] = useState<LiveConfig>(() => ({
     model: "models/gemini-2.0-flash-exp",
     systemInstruction: {
       parts: [
         {
-          text: INITIAL_PERSONA_TEXT,
+          text: getPersonaTextWithTopic(topic),
         },
       ],
     },
@@ -90,8 +101,24 @@ export function useLiveAPI({
         voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } },
       },
     },
-  });
+  }));
   const [volume, setVolume] = useState(0);
+
+  // Effect to update config's systemInstruction when topic changes *after* initial render
+  useEffect(() => {
+    const newText = getPersonaTextWithTopic(topic);
+    // Update config only if the text actually changes
+    if (newText !== config.systemInstruction?.parts?.[0]?.text) {
+      console.log("Topic changed in context, updating system instruction:", topic);
+      setConfig(prevConfig => ({
+        ...prevConfig,
+        systemInstruction: {
+          ...prevConfig.systemInstruction,
+          parts: [{ text: newText }],
+        },
+      }));
+    }
+  }, [topic]);
 
   // register audio for streaming server -> speakers
   useEffect(() => {
