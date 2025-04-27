@@ -1,11 +1,32 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "../../contexts/SessionContext";
 import { cn } from "../../lib/utils";
+import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
 
 const PersonaSection = () => {
   const { selectedPersona, getPersonaDetails } = useSession();
   const personaDetails = getPersonaDetails(selectedPersona!);
+  const { isModelTurn } = useLiveAPIContext();
+  
+  useEffect(() => {
+    console.log("isModelTurn:", isModelTurn);
+  }, [isModelTurn]);
+
+  // Helper function to get the correct video source based on persona and model turn
+  const getVideoSource = (persona: string) => {
+    const personaLower = persona.toLowerCase();
+    
+    if (personaLower === 'child') {
+      return isModelTurn ? '/assets/chloe/talking_chloe.mp4' : '/assets/chloe/idle_chloe.mp4';
+    } else if (personaLower === 'historical') {
+      return isModelTurn ? '/assets/washington/talking_washington.mp4' : '/assets/washington/idle_washington.mp4';
+    } else if (personaLower === 'professor') {
+      return isModelTurn ? '/assets/max/talking_max.mp4' : '/assets/max/idle_max.mp4';
+    }
+    
+    return '';
+  };
 
   return (
     <motion.div
@@ -33,45 +54,20 @@ const PersonaSection = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto bg-scholarly-charcoal/50 border-scholarly-gold/40">
-          {selectedPersona?.toLowerCase() === 'child' && (
-            <div className="w-full h-full flex justify-center items-center">
-              <video 
-                autoPlay 
-                muted 
-                loop 
-                className="rounded-lg object-contain w-full h-full"
-              >
-                <source src='/assets/chloe/idle_chloe.mp4' type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          )}
-          {selectedPersona?.toLowerCase() === 'historical' && (
-            <div className="w-full h-full flex justify-center items-center">
-              <video 
-                autoPlay 
-                muted 
-                loop 
-                className="rounded-lg object-contain w-full h-full"
-              >
-                <source src="/assets/washington/idle_washington.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          )}
-          {selectedPersona?.toLowerCase() === 'professor' && (
-            <div className="w-full h-full flex justify-center items-center">
-              <video 
-                autoPlay 
-                muted 
-                loop 
-                className="rounded-lg object-contain w-full h-full"
-              >
-                <source src="/assets/max/idle_max.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          )}
+        {selectedPersona && (
+          <div className="w-full h-full flex justify-center items-center">
+            <video 
+              key={`${selectedPersona}-${isModelTurn}`} // Add key to force re-render when source changes
+              autoPlay 
+              muted 
+              loop 
+              className="rounded-lg object-contain w-full h-full"
+            >
+              <source src={getVideoSource(selectedPersona)} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        )}
       </div>      
     </motion.div>
   );
