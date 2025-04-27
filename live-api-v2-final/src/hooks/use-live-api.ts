@@ -45,14 +45,6 @@ Game Director Behavior Rules:
 - Evaluate each teaching submission:
     - Award XP points (0–20) based on clarity, completeness, and creativity.
     - Unlock badges (e.g., "Creative Teacher", "Clear Visual Explainer") if deserved.
-- Return structured JSON responses in the following format:
-{
-  "reaction": "Emotional reaction to student's teaching",
-  "response": "One guiding question to deepen understanding",
-  "xpEarned": 0-20,
-  "badgesUnlocked": ["List", "of", "Achievements"],
-  "personaMood": "happy" // e.g., happy, excited, confused
-}
 - Keep all responses short, lively, and conversational (no more than 4-5 sentences unless otherwise requested).
 - Never reveal you are an AI. Always act authentically as the assigned persona.
 - Maintain curiosity, joy, and encouragement as the emotional tone throughout the session.
@@ -93,15 +85,13 @@ export function useLiveAPI({
       ],
     },
     generationConfig: {
-      responseModalities: "text",
+      responseModalities: "audio",
       speechConfig: {
         voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } },
       },
     },
   });
   const [volume, setVolume] = useState(0);
-  const [modelResponseBuffer, setModelResponseBuffer] = useState('');
-  const [finalJsonResponse, setFinalJsonResponse] = useState<any>(null);
 
   // register audio for streaming server -> speakers
   useEffect(() => {
@@ -148,47 +138,6 @@ export function useLiveAPI({
         .off("audio", onAudio);
     };
   }, [client]);
-
-  useEffect(() => {
-    const handleContent = (serverContent: ServerContent) => {
-      if (isModelTurn(serverContent)) {
-        const textPart = serverContent.modelTurn.parts
-          .map((part: Part) => part.text || '')
-          .join('');
-        setModelResponseBuffer(prev => prev + textPart);
-      }
-    };
-
-    const handleTurnComplete = () => {
-      console.log('Turn complete. Processing buffer:', modelResponseBuffer);
-      try {
-        const potentialJsonMatch = modelResponseBuffer.match(/\{[\s\S]*\}/);
-        if (potentialJsonMatch) {
-          const jsonString = potentialJsonMatch[0];
-          const parsedJson = JSON.parse(jsonString);
-          setFinalJsonResponse(parsedJson);
-          console.log('Successfully parsed JSON:', parsedJson);
-        } else {
-          console.error('Could not find valid JSON in the buffer:', modelResponseBuffer);
-          setFinalJsonResponse(null);
-        }
-      } catch (error) {
-        console.error('Failed to parse buffered JSON:', error);
-        console.error('Buffer content:', modelResponseBuffer);
-        setFinalJsonResponse(null);
-      } finally {
-        setModelResponseBuffer('');
-      }
-    };
-
-    client.on('content', handleContent);
-    client.on('turncomplete', handleTurnComplete);
-
-    return () => {
-      client.off('content', handleContent);
-      client.off('turncomplete', handleTurnComplete);
-    };
-  }, [client, modelResponseBuffer]);
 
   const connect = useCallback(async (): Promise<boolean> => {
     console.log("Attempting to connect with config:", config);
