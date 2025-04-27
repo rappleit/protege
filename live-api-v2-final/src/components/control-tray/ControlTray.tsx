@@ -25,6 +25,8 @@ import { AudioRecorder } from "../../lib/audio-recorder";
 import AudioPulse from "../audio-pulse/AudioPulse";
 import "./control-tray.scss";
 import SettingsDialog from "../settings-dialog/SettingsDialog";
+import { useNavigate } from "react-router-dom";
+import { useSession } from "../../contexts/SessionContext";
 
 export type ControlTrayProps = {
   videoRef: RefObject<HTMLVideoElement>;
@@ -77,6 +79,8 @@ function ControlTray({
 
   const { client, connected, connect, disconnect, volume } =
     useLiveAPIContext();
+  const navigate = useNavigate();
+  const { setFeedback, setScore, topic, selectedPersona, setTopic, setSelectedPersona } = useSession();
 
   // Ref to track the current connection status reliably
   const isConnectedRef = useRef(connected);
@@ -181,6 +185,43 @@ function ControlTray({
     videoStreams.filter((msr) => msr !== next).forEach((msr) => msr.stop());
   };
 
+  const handleEndSession = () => {
+    console.log("End Session clicked");
+    
+    // Ensure we have the minimum required session data
+    if (!topic) {
+      console.log("Setting default topic");
+      setTopic("Example Topic");
+    }
+    
+    if (!selectedPersona) {
+      console.log("Setting default persona");
+      setSelectedPersona("professor");
+    }
+    
+    // Set example feedback
+    console.log("Setting example feedback");
+    setFeedback([
+      "You explained the concept clearly and used good examples.",
+      "Try using simpler language for some of the technical terms.",
+      "Your explanation was well-structured and easy to follow."
+    ]);
+    
+    // Set example score
+    console.log("Setting example score");
+    setScore(85);
+    
+    // Log before disconnect
+    console.log("About to disconnect");
+    disconnect();
+    console.log("Disconnected successfully");
+    
+    // Log before navigation
+    console.log("About to navigate to /results");
+    navigate("/results");
+    console.log("Navigation called");
+  };
+
   return (
     <section className="control-tray flex items-center justify-center border-scholarly-gold border-2 rounded-lg bg-scholarly-navy p-4 min-h-[80px]">
       <canvas style={{ display: "none" }} ref={renderCanvasRef} />
@@ -238,7 +279,7 @@ function ControlTray({
           {/* Right side: End Session button */}
           <button
             className="action-button end-session-button flex items-center gap-2 bg-scholarly-navy/70 hover:bg-scholarly-navy/90 text-scholarly-gold border-2 border-scholarly-gold/30 hover:border-scholarly-gold/50 px-4 py-2 rounded-lg"
-            onClick={disconnect}
+            onClick={handleEndSession}
           >
             <span className="material-symbols-outlined filled">stop</span>
             <span>End Session</span>
