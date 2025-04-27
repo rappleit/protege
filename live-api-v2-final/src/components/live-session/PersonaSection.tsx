@@ -32,9 +32,47 @@ const PersonaSection = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto bg-scholarly-charcoal/50 border-scholarly-gold/40 rounded-lg p-4">
-        <div className="flex items-center gap-2 text-muted-foreground text-sm p-3"></div>
-      </div>
+      <div className="flex-1 overflow-y-auto bg-scholarly-charcoal/50 border-scholarly-gold/40">
+          {selectedPersona?.toLowerCase() === 'child' && (
+            <div className="w-full h-full flex justify-center items-center">
+              <video 
+                autoPlay 
+                muted 
+                loop 
+                className="rounded-lg object-contain w-full h-full"
+              >
+                <source src='/assets/chloe/idle_chloe.mp4' type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          )}
+          {selectedPersona?.toLowerCase() === 'historical' && (
+            <div className="w-full h-full flex justify-center items-center">
+              <video 
+                autoPlay 
+                muted 
+                loop 
+                className="rounded-lg object-contain w-full h-full"
+              >
+                <source src="/assets/washington/idle_washington.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          )}
+          {selectedPersona?.toLowerCase() === 'professor' && (
+            <div className="w-full h-full flex justify-center items-center">
+              <video 
+                autoPlay 
+                muted 
+                loop 
+                className="rounded-lg object-contain w-full h-full"
+              >
+                <source src="/assets/max/idle_max.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          )}
+      </div>      
     </motion.div>
   );
 };
