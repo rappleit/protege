@@ -49,11 +49,11 @@ const MediaStreamButton = memo(
   ({ isStreaming, onIcon, offIcon, start, stop }: MediaStreamButtonProps) =>
     isStreaming ? (
       <button className="action-button" onClick={stop}>
-        <span className="material-symbols-outlined">{onIcon}</span>
+        <span className="material-symbols-outlined text-scholarly-gold">{onIcon}</span>
       </button>
     ) : (
       <button className="action-button" onClick={start}>
-        <span className="material-symbols-outlined">{offIcon}</span>
+        <span className="material-symbols-outlined text-scholarly-gold">{offIcon}</span>
       </button>
     )
 );
@@ -160,7 +160,7 @@ function ControlTray({
   };
 
   return (
-    <section className="control-tray">
+    <section className="control-tray border-scholarly-gold border-2 rounded-lg bg-scholarly-navy">
       <canvas style={{ display: "none" }} ref={renderCanvasRef} />
       <nav className={cn("actions-nav", { disabled: !connected })}>
         <button
@@ -168,14 +168,16 @@ function ControlTray({
           onClick={() => setMuted(!muted)}
         >
           {!muted ? (
-            <span className="material-symbols-outlined filled">mic</span>
+            <span className="material-symbols-outlined filled text-scholarly-gold">mic</span>
           ) : (
-            <span className="material-symbols-outlined filled">mic_off</span>
+            <span className="material-symbols-outlined filled text-red-500">mic_off</span>
           )}
         </button>
 
-        <div className="action-button no-action outlined">
-          <AudioPulse volume={volume} active={connected} hover={false} />
+        <div className="action-button no-action outlined text-scholarly-gold">
+          <div className="text-scholarly-gold">
+            <AudioPulse volume={volume} active={connected} hover={false} />
+          </div>
         </div>
 
         {supportsVideo && (
@@ -200,18 +202,18 @@ function ControlTray({
       </nav>
 
       <div className={cn("connection-container", { connected })}>
-        <div className="connection-button-container">
+        <div className="connection-button-container ">
           <button
             ref={connectButtonRef}
-            className={cn("action-button connect-toggle", { connected })}
+            className={cn("action-button connect-toggle ", { connected })}
             onClick={connected ? disconnect : connect}
           >
-            <span className="material-symbols-outlined filled">
+            <span className="material-symbols-outlined filled text-scholarly-gold">
               {connected ? "pause" : "play_arrow"}
             </span>
           </button>
         </div>
-        <span className="text-indicator">Streaming</span>
+        <span className="text-indicator text-scholarly-gold">Streaming</span>
       </div>
       {enableEditingSettings ? <SettingsDialog /> : ""}
     </section>

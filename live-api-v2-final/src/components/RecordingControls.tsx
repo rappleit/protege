@@ -289,8 +289,8 @@ const RecordingControls: React.FC<RecordingControlsProps> = ({
   };
 
   return (
-    <div className={cn("rpg-card flex flex-col items-center p-4", className)}>
-      <div className="rpg-gradient" />
+    <div className={cn("flex flex-col items-center p-4 ", className)}>
+      <div className="" />
 
       {!sessionStarted ? (
         <div className="flex justify-center z-10 py-4">
