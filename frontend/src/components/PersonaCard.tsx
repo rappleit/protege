@@ -5,7 +5,7 @@ import { Star, Sword, Book } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type PersonaCardProps = {
-  persona: 'child' | 'professor' | 'historical';
+  persona: 'child' | 'professor' | 'custom' | 'washington';
   isSelected: boolean;
   onClick: () => void;
 };
@@ -18,7 +18,8 @@ const PersonaCard: React.FC<PersonaCardProps> = ({ persona, isSelected, onClick 
     switch (persona) {
       case 'child': return Star;
       case 'professor': return Book;
-      case 'historical': return Sword;
+      case 'custom': return Sword;
+      case 'washington' : return Sword
       default: return Star;
     }
   };

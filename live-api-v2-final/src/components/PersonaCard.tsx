@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useSession, Persona } from "../contexts/SessionContext";
-import { Star, Sword, Book } from "lucide-react";
+import { Star, Sword, Book, Scale } from "lucide-react";
 import { cn } from "../lib/utils";
 
 type PersonaCardProps = {
@@ -26,6 +26,8 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         return Book;
       case "custom":
         return Sword;
+      case "washington":
+        return Scale;
       default:
         const exhaustiveCheck: never = persona;
         return Star;

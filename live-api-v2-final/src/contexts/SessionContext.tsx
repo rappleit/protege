@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 
-export type Persona = 'child' | 'professor' | 'custom';
+export type Persona = 'child' | 'professor' | 'custom' | 'washington';
 
 export type PersonaDetails = {
   name: string;
@@ -67,6 +67,14 @@ export const personaData: Record<Persona, PersonaDetails> = {
     name: "Dynamic Character",
     title: "Historical Figure",
     description: "I'll provide a unique perspective on your topic based on my era and experiences. Please define my details!",
+    imageUrl: "/placeholder.svg",
+    color: "bg-protege-historical",
+    gender: "male",
+  },
+  washington: {
+    name: "George Washington",
+    title: "Founding Father",
+    description: "Present your topic with clarity and virtue, as if addressing the Continental Congress. I value concise and principled explanations.",
     imageUrl: "/placeholder.svg",
     color: "bg-protege-historical",
     gender: "male",

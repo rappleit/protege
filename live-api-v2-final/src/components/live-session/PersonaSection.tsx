@@ -19,9 +19,11 @@ const PersonaSection = () => {
     
     if (personaLower === 'child') {
       return isModelTurn ? '/assets/chloe/talking_chloe.mp4' : '/assets/chloe/idle_chloe.mp4';
-    } else if (personaLower === 'historical') {
+    } else if (personaLower === 'custom') {
       return isModelTurn ? '/assets/washington/talking_washington.mp4' : '/assets/washington/idle_washington.mp4';
     } else if (personaLower === 'professor') {
+      return isModelTurn ? '/assets/max/talking_max.mp4' : '/assets/max/idle_max.mp4';
+    } else if (personaLower === 'washington') {
       return isModelTurn ? '/assets/max/talking_max.mp4' : '/assets/max/idle_max.mp4';
     }
     

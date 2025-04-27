@@ -41,7 +41,7 @@ const PersonaSelection = () => {
     }
   };
 
-  const personas: Persona[] = ["child", "professor", "custom"];
+  const personas: Persona[] = ["child", "professor", "custom", "washington"];
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-900 text-white">
@@ -95,7 +95,7 @@ const PersonaSelection = () => {
                     value={customPersonaName === personaData.custom.name ? '' : customPersonaName}
                     onChange={(e) => setCustomPersonaName(e.target.value)}
                     placeholder={personaData.custom.name}
-                    style={{ color: 'black' }}
+                    style={{ color: 'white' }}
                     className="bg-gray-700 border-gray-600 text-black dark:text-black placeholder:text-gray-500 w-full"
                   />
                 </div>
@@ -106,7 +106,7 @@ const PersonaSelection = () => {
                     value={customPersonaTitle === personaData.custom.title ? '' : customPersonaTitle}
                     onChange={(e) => setCustomPersonaTitle(e.target.value)}
                     placeholder={personaData.custom.title}
-                    style={{ color: 'black' }}
+                    style={{ color: 'white' }}
                     className="bg-gray-700 border-gray-600 text-black dark:text-black placeholder:text-gray-500 w-full"
                   />
                 </div>
@@ -117,7 +117,7 @@ const PersonaSelection = () => {
                     value={customPersonaDescription === personaData.custom.description ? '' : customPersonaDescription}
                     onChange={(e) => setCustomPersonaDescription(e.target.value)}
                     placeholder={personaData.custom.description}
-                    style={{ color: 'black' }}
+                    style={{ color: 'white' }}
                     className="bg-gray-700 border-gray-600 text-black dark:text-black placeholder:text-gray-500 w-full h-24"
                     rows={3}
                   />

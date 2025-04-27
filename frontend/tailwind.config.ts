@@ -68,7 +68,8 @@ export default {
           parchment: "#F5F5DC",
           child: "#D4AF37", // Gold for child persona
           professor: "#556B2F", // Olive for professor persona
-          historical: "#732F2F", // Burgundy for historical persona
+          custom: "#732F2F", // Burgundy for historical persona
+          washington: "#732F2F"
         },
       },
       borderRadius: {

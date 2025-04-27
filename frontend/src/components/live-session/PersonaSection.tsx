@@ -44,7 +44,7 @@ const PersonaSection = () => {
               </video>
             </div>
           )}
-          {selectedPersona?.toLowerCase() === 'historical' && (
+          {selectedPersona?.toLowerCase() === 'washington' && (
             <div className="w-full h-full flex justify-center items-center">
               <video 
                 autoPlay 
